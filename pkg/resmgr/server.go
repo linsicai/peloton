@@ -49,6 +49,7 @@ type Server struct {
 	drainer               ServerProcess
 	preemptor             ServerProcess
 	batchScorer           ServerProcess
+
 	// TODO move these to use ServerProcess
 	getTaskScheduler func() task.Scheduler
 
@@ -57,6 +58,7 @@ type Server struct {
 }
 
 // NewServer will create the elect handle object
+// 初始化
 func NewServer(
 	parent tally.Scope,
 	httpPort,
@@ -85,16 +87,19 @@ func NewServer(
 
 // GainedLeadershipCallback is the callback when the current node
 // becomes the leader
+// 领导者回调
 func (s *Server) GainedLeadershipCallback() (err error) {
 	s.Lock()
 	defer s.Unlock()
 
+    // 如果没有出错，就是领导者了
 	defer func() {
 		if err == nil {
 			s.isLeader = true
 		}
 	}()
 
+    // 日志与打点
 	log.WithField("role", s.role).
 		Info("Gained leadership")
 	s.metrics.Elected.Update(1.0)
@@ -162,6 +167,7 @@ func (s *Server) GainedLeadershipCallback() (err error) {
 }
 
 // LostLeadershipCallback is the callback when the current node lost leadership
+// 非领导者回调
 func (s *Server) LostLeadershipCallback() error {
 	s.Lock()
 	defer s.Unlock()

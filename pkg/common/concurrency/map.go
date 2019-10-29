@@ -20,6 +20,7 @@ import (
 )
 
 // Mapper maps inputs into outputs.
+// 映射
 type Mapper interface {
 	Map(ctx context.Context, input interface{}) (output interface{}, err error)
 }
@@ -28,10 +29,12 @@ type Mapper interface {
 type MapperFunc func(ctx context.Context, input interface{}) (output interface{}, err error)
 
 // Map calls f.
+// 调用函数
 func (f MapperFunc) Map(ctx context.Context, input interface{}) (output interface{}, err error) {
 	return f(ctx, input)
 }
 
+// map 结果
 type mapResult struct {
 	output interface{}
 	err    error
@@ -54,6 +57,7 @@ func Map(
 	inputc := make(chan interface{})
 	resultc := make(chan *mapResult)
 
+    // 并发
 	var wg sync.WaitGroup
 	for w := 0; w < numWorkers; w++ {
 		wg.Add(1)
@@ -63,16 +67,23 @@ func Map(
 			for {
 				select {
 				case i, ok := <-inputc:
+				    // 拉取输入
+
 					if !ok {
+					    // 结束了
 						return
 					}
+
+					// 做map
 					o, err := m.Map(ctx, i)
+					// 取结果
 					select {
 					case resultc <- &mapResult{o, err}:
 					case <-ctx.Done():
 						return
 					}
 				case <-ctx.Done():
+				    // 结束
 					return
 				}
 			}
@@ -80,6 +91,7 @@ func Map(
 	}
 
 	go func() {
+	    // 遍历输入，放到通道中
 		for _, i := range inputs {
 			select {
 			case inputc <- i:
@@ -87,24 +99,36 @@ func Map(
 				return
 			}
 		}
+		// 输入结束
 		close(inputc)  // Signal to workers there are no more inputs.
+
+        // 等待所有map 结束
 		wg.Wait()      // Wait for workers to finish in-progress work.
+
+        // 可以取结果了
 		close(resultc) // Signal to consumer that work is finished.
 	}()
 
+	// 取结果
 	for {
 		select {
 		case r, ok := <-resultc:
+		    // 读到结果
+
 			if !ok {
+			    // 没有结束
 				return outputs, nil
 			}
 			if r.err != nil {
+			    // 失败了
 				return nil, r.err
 			}
 			if r.output != nil {
+			    // 累计结果
 				outputs = append(outputs, r.output)
 			}
 		case <-ctx.Done():
+		    // 上下文结束了
 			return nil, ctx.Err()
 		}
 	}

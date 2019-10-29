@@ -17,6 +17,7 @@ package async
 import "context"
 
 // Job to be inserted to a Pool or Queue.
+// 工作接口
 type Job interface {
 	// Run the Job, provided the given context.
 	// TODO: Error result?
@@ -25,6 +26,7 @@ type Job interface {
 
 // JobFunc is an convenience type for easily converting function literals
 // to a Job compatible object.
+// 工作函数
 type JobFunc func(context.Context)
 
 // Run the JobFunc by invoking itself.

@@ -21,5 +21,6 @@ import (
 // Config is the placeholder for health related configs
 type Config struct {
 	// Heartbeat interval
+	// 心跳间隔
 	HeartbeatInterval time.Duration `yaml:"heartbeat_interval"`
 }

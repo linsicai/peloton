@@ -26,14 +26,17 @@ import (
 )
 
 // Heartbeat is the heartbeat interface
+// 心跳接口
 type Heartbeat interface {
 	Start()
 	Stop()
 }
 
 type heartbeat struct {
+    // 锁
 	sync.Mutex
 
+    // 信号
 	Running  atomic.Bool
 	stopChan chan struct{}
 
@@ -67,6 +70,7 @@ func (*heartbeat) Start() {
 	hb.Lock()
 	defer hb.Unlock()
 
+    // 校验是否已启动
 	if hb.Running.Swap(true) {
 		log.Warn("Heartbeater is already running, no-op.")
 		return
@@ -79,9 +83,11 @@ func (*heartbeat) Start() {
 			ticker := time.NewTimer(hb.heartbeatInterval)
 			select {
 			case <-hb.stopChan:
+			    // 退出
 				log.Info("Heartbeater stopped.")
 				return
 			case t := <-ticker.C:
+			    // 心跳
 				log.WithField("tick", t).
 					Debug("Emitting heartbeat.")
 				hb.metrics.Heartbeat.Update(1)
@@ -89,6 +95,7 @@ func (*heartbeat) Start() {
 				// Only send a leader heartbeat metric
 				// for the elected leader
 				if hb.candidate != nil && hb.candidate.IsLeader() {
+				    // leader 心跳
 					log.WithField("tick", t).
 						Debug("Emitting leader metric.")
 					hb.metrics.Leader.Update(1)

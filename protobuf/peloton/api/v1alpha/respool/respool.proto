@@ -23,28 +23,35 @@ import "peloton/api/v1alpha/peloton.proto";
 //                │  └─ compute
 //                └─ marketplace
 //
+// 资源池路径
 message ResourcePoolPath {
   string value = 1;
 }
 
 // Resource configuration for a resource
+// 资源规格
 message ResourceSpec {
   // Type of the resource
+  // 类型
   string kind = 1;
 
   // Reservation/min of the resource
+  // 预留比例
   double reservation = 2;
 
   // Limit of the resource
+  // 最小
   double limit = 3;
 
   // Share on the resource pool
+  // 共享值
   double share = 4;
 
   // ReservationType indicates the the type of reservation
   // There are two kind of reservation
   // 1. ELASTIC
   // 2. STATIC
+  // 预留类型
   ReservationType type = 5;
 }
 
@@ -58,6 +65,7 @@ enum ReservationType {
   // as this resource pool also can take resources from
   // any other resource pool. This is the by default behavior
   // for the resource pool
+  // 共享资源池
   RESERVATION_TYPE_ELASTIC = 1;
 
   // STATIC reservation enables resource pool to be static
@@ -67,10 +75,12 @@ enum ReservationType {
   // resource pool. If demand for this resource pool is high
   // it can take resources from other resource pools.
   // By default value for reservation type ELASTIC.
+  // 静态资源池
   RESERVATION_TYPE_STATIC = 2;
 }
 
 // Scheduling policy for Resource Pool.
+// 资源池调度策略
 enum SchedulingPolicy {
   SCHEDULING_POLICY_INVALID = 0;
 
@@ -79,36 +89,47 @@ enum SchedulingPolicy {
 }
 
 // Resource Pool configuration
+// 资源池规格
 message ResourcePoolSpec {
   // Revision of the Resource Pool config
+  // 版本
   peloton.Revision revision = 1;
 
   // Name of the resource pool
+  // 名称
   string name = 2;
 
   // Owning team of the pool
+  // 拥有者
   string owning_team = 3;
 
   // LDAP groups of the pool
+  // ？？？
   repeated string ldap_groups = 4;
 
   // Description of the resource pool
+  // 描述
   string description = 5;
 
   // Resource config of the Resource Pool
+  // 资源描述
   repeated ResourceSpec resources = 6;
 
   // Resource Pool's parent
+  // 夫资源池
   peloton.ResourcePoolID parent = 7;
 
   // Task Scheduling policy
+  // 调度策略
   SchedulingPolicy policy = 8;
 
   // The controller limit for this resource pool
+  // ？？？
   ControllerLimit controller_limit = 9;
 
   // Cap on max non-slack resources[mem,disk] in percentage
   // that can be used by revocable task.
+  // ？？？
   SlackLimit slack_limit = 10;
 }
 
@@ -156,6 +177,7 @@ message SlackLimit {
   double maxPercent = 1 ;
 }
 
+// 资源使用率
 message ResourceUsage {
   // Type of the resource
   string kind = 1;
@@ -169,6 +191,7 @@ message ResourceUsage {
   double slack = 3;
 }
 
+// 资源池信息
 message ResourcePoolInfo {
   // Resource Pool Id
   peloton.ResourcePoolID respool_id = 1;

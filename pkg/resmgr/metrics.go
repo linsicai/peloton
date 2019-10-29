@@ -18,14 +18,17 @@ import "github.com/uber-go/tally"
 
 // Metrics is a placeholder for all metrics in resmgr.
 type Metrics struct {
+    // 入队列
 	APIEnqueueGangs    tally.Counter
 	EnqueueGangSuccess tally.Counter
 	EnqueueGangFail    tally.Counter
 
+    // 出队列
 	APIDequeueGangs    tally.Counter
 	DequeueGangSuccess tally.Counter
 	DequeueGangTimeout tally.Counter
 
+    // 
 	APIGetPreemptibleTasks     tally.Counter
 	GetPreemptibleTasksSuccess tally.Counter
 	GetPreemptibleTasksTimeout tally.Counter

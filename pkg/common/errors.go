@@ -20,19 +20,24 @@ import (
 
 // IsTransientError returns true if the error was transient and the overall
 // operation should be retried.
+// 是否短暂错误
 func IsTransientError(err error) bool {
 	if yarpcerrors.IsAlreadyExists(err) {
+	    // 已存在
 		return true
 	}
 	if yarpcerrors.IsAborted(err) {
+	    // 取消
 		return true
 	}
 
 	if yarpcerrors.IsUnavailable(err) {
+	    // 不可用
 		return true
 	}
 
 	if yarpcerrors.IsDeadlineExceeded(err) {
+	    // 超时
 		return true
 	}
 

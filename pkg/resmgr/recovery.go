@@ -95,13 +95,18 @@ Recovery of maintenance queue is performed
 type RecoveryHandler struct {
 	metrics         *Metrics
 	scope           tally.Scope
+
 	taskStore       storage.TaskStore
+
 	activeJobsOps   ormobjects.ActiveJobsOps
 	jobConfigOps    ormobjects.JobConfigOps
 	jobRuntimeOps   ormobjects.JobRuntimeOps
+
 	handler         *ServiceHandler
+
 	config          Config
 	hostmgrClient   hostsvc.InternalHostServiceYARPCClient
+
 	nonRunningTasks []*resmgrsvc.EnqueueGangsRequest
 	tracker         rmtask.Tracker
 	resTree         respool.Tree

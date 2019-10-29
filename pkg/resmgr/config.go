@@ -25,9 +25,11 @@ import (
 // Config is Resource Manager specific configuration
 type Config struct {
 	// HTTP port which hostmgr is listening on
+	// http 端口
 	HTTPPort int `yaml:"http_port"`
 
 	// GRPC port which hostmgr is listening on
+	// grpc 端口
 	GRPCPort int `yaml:"grpc_port"`
 
 	// Period to run task scheduling in seconds

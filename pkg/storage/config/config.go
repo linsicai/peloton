@@ -21,8 +21,11 @@ import (
 // Config contains the different DB config values for each
 // supported backend
 type Config struct {
+    // db 配置
 	Cassandra          cassandra.Config `yaml:"cassandra"`
 	UseCassandra       bool             `yaml:"use_cassandra"`
+
+    // 选项
 	AutoMigrate        bool             `yaml:"auto_migrate"`
 	DbWriteConcurrency int              `yaml:"db_write_concurrency"`
 }

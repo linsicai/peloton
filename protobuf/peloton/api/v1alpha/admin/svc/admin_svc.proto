@@ -8,18 +8,23 @@ option go_package = "peloton/api/v1alpha/admin/svc";
 option java_package = "peloton.api.v1alpha.admin.svc";
 
 // Component that can be locked/unlocked
+// 锁类型
 enum Component {
     GoalStateEngine = 0;
     Read = 1;
     Write = 2;
     Kill = 3;
+
     // Not supported yet
     Launch = 4;
 }
 
 // Message for faliure to lock/unlock a component
+// 操作失败结果
 message ComponentFailure {
+    // 锁
     Component component = 1;
+    // 失败原因
     string FailureMessage = 2;
 }
 

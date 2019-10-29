@@ -26,12 +26,14 @@ import (
 
 // PelotonSecretsConfig will be used to interpret secrets mounted
 // for Peloton service
+// 密钥配置
 type PelotonSecretsConfig struct {
 	CassandraUsername string `yaml:"peloton_cassandra_username"`
 	CassandraPassword string `yaml:"peloton_cassandra_password"`
 }
 
 // ValidationError is the returned when a configuration fails to pass validation
+// 验证错误
 type ValidationError struct {
 	errorMap validator.ErrorMap
 }
@@ -57,20 +59,25 @@ func (e ValidationError) Error() string {
 // config interface.
 func Parse(config interface{}, configFiles ...string) error {
 	if len(configFiles) == 0 {
+	    // 无配置文件
 		return errors.New("no files to load")
 	}
+
 	for _, fname := range configFiles {
+	    // 读取文件
 		data, err := ioutil.ReadFile(fname)
 		if err != nil {
 			return err
 		}
 
+        // 反序列化
 		if err := yaml.Unmarshal(data, config); err != nil {
 			return err
 		}
 	}
 
 	// Validate on the merged config at the end.
+	// 校验配置
 	if err := validator.Validate(config); err != nil {
 		return ValidationError{
 			errorMap: err.(validator.ErrorMap),

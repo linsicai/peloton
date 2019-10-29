@@ -21,6 +21,7 @@ import (
 // Metrics is a placeholder for all metrics in health package.
 type Metrics struct {
 	Init      tally.Counter
+
 	Heartbeat tally.Gauge
 	Leader    tally.Gauge
 }

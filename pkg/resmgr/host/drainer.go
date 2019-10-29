@@ -33,6 +33,7 @@ import (
 
 const (
 	contextTimeout                      = 10 * time.Second
+
 	drainingHostsLimit                  = 100                    // Maximum number of hosts to be polled from Maintenance Queue
 	drainingHostsTimeout                = 1000                   // Maintenance Queue poll timeout
 	markHostDrainedBackoffRetryCount    = 3                      // Retry count to mark host drained
@@ -43,7 +44,9 @@ const (
 // the hosts which are to be put into maintenance
 type Drainer struct {
 	hostMgrClient   hostsvc.InternalHostServiceYARPCClient // Host Manager client
+
 	metrics         *Metrics
+
 	rmTracker       rmtask.Tracker      // Task Tracker
 	started         int32               // State of the host drainer
 	drainerPeriod   time.Duration       // Period to run host drainer

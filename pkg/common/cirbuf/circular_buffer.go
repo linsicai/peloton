@@ -24,8 +24,12 @@ import (
 
 // CircularBuffer is a circular buffer implementation
 type CircularBuffer struct {
-	sync.RWMutex
-	buffer []*CircularBufferItem
+	sync.RWMutex // 锁
+
+	buffer []*CircularBufferItem // 数组
+
+
+    // 头部和尾部
 	// head points to the next newest item to be added
 	head uint64
 	// tail points to the last available item
@@ -41,6 +45,7 @@ func NewCircularBuffer(bufferSize int) *CircularBuffer {
 }
 
 // Capacity returns the total capacity of the circular buffer
+// 容量
 func (c *CircularBuffer) Capacity() int {
 	c.RLock()
 	defer c.RUnlock()
@@ -48,6 +53,7 @@ func (c *CircularBuffer) Capacity() int {
 }
 
 // Size returns the size used in the circular buffer
+// 大小
 func (c *CircularBuffer) Size() int {
 	c.RLock()
 	defer c.RUnlock()
@@ -58,7 +64,9 @@ func (c *CircularBuffer) Size() int {
 func (c *CircularBuffer) GetItem(sequence uint64) (*CircularBufferItem, error) {
 	c.RLock()
 	defer c.RUnlock()
+
 	if sequence < c.tail || sequence >= c.head {
+	    // 错误序号
 		log.WithFields(log.Fields{
 			"position": sequence,
 			"head":     c.head,
@@ -66,6 +74,7 @@ func (c *CircularBuffer) GetItem(sequence uint64) (*CircularBufferItem, error) {
 			Error("GetItem Index out of bound")
 		return nil, errors.New("GetItem Index out of bound")
 	}
+
 	return c.buffer[int(sequence%uint64(len(c.buffer)))], nil
 }
 
@@ -75,6 +84,11 @@ func (c *CircularBuffer) GetItem(sequence uint64) (*CircularBufferItem, error) {
 func (c *CircularBuffer) GetItemsByRange(from uint64, to uint64) ([]*CircularBufferItem, error) {
 	c.RLock()
 	defer c.RUnlock()
+
+     
+    // from to
+    // tail head
+    // 参数校验
 	if from > c.head || to < c.tail {
 		log.WithFields(log.Fields{
 			"from": from,
@@ -84,7 +98,10 @@ func (c *CircularBuffer) GetItemsByRange(from uint64, to uint64) ([]*CircularBuf
 			Error("Index out of bound")
 		return nil, errors.New("GetItemsByRange Index out of bound")
 	}
+
 	var items []*CircularBufferItem
+
+    // 一些异常处理
 	if from == c.head {
 		return items, nil
 	}
@@ -109,6 +126,8 @@ func (c *CircularBuffer) GetItemsByRange(from uint64, to uint64) ([]*CircularBuf
 func (c *CircularBuffer) AddItem(data interface{}) (*CircularBufferItem, error) {
 	c.Lock()
 	defer c.Unlock()
+
+    // 校验是否满了
 	if c.isFull() {
 		log.WithFields(log.Fields{
 			"head": c.head,
@@ -116,10 +135,14 @@ func (c *CircularBuffer) AddItem(data interface{}) (*CircularBufferItem, error) 
 			Error("Buffer is full")
 		return nil, fmt.Errorf("AddItem buffer is full")
 	}
+
+    // 创建缓存项
 	item := &CircularBufferItem{
 		SequenceID: c.head,
 		Value:      data,
 	}
+
+    // 入buffer
 	c.buffer[int((c.head)%uint64(len(c.buffer)))] = item
 	c.head++
 	return item, nil
@@ -129,6 +152,8 @@ func (c *CircularBuffer) AddItem(data interface{}) (*CircularBufferItem, error) 
 func (c *CircularBuffer) MoveTail(newTail uint64) ([]*CircularBufferItem, error) {
 	c.Lock()
 	defer c.Unlock()
+
+    // 校验入参
 	if newTail > c.head || newTail < c.tail {
 		log.WithFields(log.Fields{
 			"head": c.head,
@@ -136,6 +161,8 @@ func (c *CircularBuffer) MoveTail(newTail uint64) ([]*CircularBufferItem, error)
 			Error("New tail value is out of range")
 		return nil, fmt.Errorf("MoveTail new tail value is out of range")
 	}
+
+    // 队列尾向前走
 	var removedItems []*CircularBufferItem
 	for i := c.tail; i < newTail; i++ {
 		removedItems = append(removedItems, c.buffer[int(i%uint64(len(c.buffer)))])
@@ -153,11 +180,13 @@ func (c *CircularBuffer) isFull() bool {
 func (c *CircularBuffer) GetRange() (uint64, uint64) {
 	c.RLock()
 	defer c.RUnlock()
+
 	return c.head, c.tail
 }
 
 // CircularBufferItem is the item stored in the circular buffer
+// 循环缓冲项
 type CircularBufferItem struct {
-	SequenceID uint64
-	Value      interface{}
+	SequenceID uint64 // 序列号
+	Value      interface{} // 值
 }

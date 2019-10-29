@@ -8,46 +8,58 @@ import "peloton/api/v1alpha/peloton.proto";
 
 import "mesos/v1/mesos.proto";
 
-
+// 主机状态
 enum HostState {
+    // 非法
     HOST_STATE_INVALID = 0;
 
     // Reserved for future compatibility of new states.
+    // 未知
     HOST_STATE_UNKNOWN = 1;
 
     // The host is healthy.
+    // 健康
     HOST_STATE_UP = 2;
 
     // The tasks running on the host are being rescheduled.
     // There will be no further placement of tasks on the host.
+    // 执行中
     HOST_STATE_DRAINING = 3;
 
     // There are no tasks running on the host and is ready to be put into
     // maintenance.
+    // 下线中
     HOST_STATE_DRAINED = 4;
 
     // The host is in maintenance.
+    // 下线
     HOST_STATE_DOWN = 5;
 }
 
 message HostInfo {
     // Hostname of the host
+    // 主机名
     string hostname = 1;
 
     // IP address of the host
+    // ip
     string ip = 2;
 
     // Current state of the host
+    // 主机状态
     HostState state = 3;
 
     // Goal state of the host
+    // 目标状态
     HostState goal_state = 4;
 
     // Host labels.
+    // 标签列表
     repeated peloton.Label labels = 5;
 }
 
 // Portrange describes a range of ports.
+// 端口范围
 message PortRange {
     // The start of the port range.
     uint64 begin = 1;
@@ -58,29 +70,38 @@ message PortRange {
 
 // HostSummary describes the resources available on a host for placement along
 // with metadata like host labels.
+// 主机概述
 message HostSummary {
   // The hostname of the host.
+  // 主机名
   string hostname = 1;
 
   // Resources available for placement on the host.
+  // 资源列表
   peloton.Resources resources = 2;
 
   // Host Labels.
+  // 标签
   repeated peloton.Label labels = 3;
 
   // Available port ranges.
+  // 端口范围
   repeated PortRange available_ports = 4;
 
   // offers
+  // ？？？
   map<string,mesos.v1.Offer>  Offers = 5;
 
 }
 
 // HostPoolInfo describes a host-pool
+// 主机池
 message HostPoolInfo {
   // Name of the pool. Pool names are unique.
+  // 名字
   string name = 1;
 
   // Hosts that belong to the pool
+  // 主机名列表
   repeated string hosts = 2;
 }

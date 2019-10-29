@@ -12,9 +12,11 @@ import "peloton/api/v1alpha/peloton.proto";
 // Volume configuration.
 message VolumeSpec {
   // Volume's name. Must be unique within a pod.
+  // 名字
   string name = 1;
 
   // Type of the volume
+  // 类型
   enum VolumeType {
     // Invalid volume type
     VOLUME_TYPE_INVALID = 0;
@@ -77,6 +79,7 @@ enum VolumeState {
 
 // Persistent volume information.
 // Deprecated
+// 持久性存储
 message PersistentVolumeInfo {
   // ID of the persistent volume.
   peloton.VolumeID volume_id = 1;

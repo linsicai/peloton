@@ -9,12 +9,14 @@ option java_package = "peloton.api.v1alpha.query";
 
 // A dot separated path to a object property such as config.name or
 // runtime.creationTime for a job object.
+// 属性路径
 message PropertyPath {
   string value = 1;
 }
 
 // Order by clause of a query
 message OrderBy {
+  // 排序
   enum Order {
     ORDER_BY_INVALID = 0;
     ORDER_BY_ASC = 1;

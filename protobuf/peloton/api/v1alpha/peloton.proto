@@ -11,12 +11,14 @@ option java_package = "peloton.api.v1alpha.peloton";
 import "google/protobuf/timestamp.proto";
 
 // A unique ID assigned to a Job. This is a UUID in RFC4122 format.
+// 任务ID
 message JobID {
   string value = 1;
 }
 
 // A unique name assigned to a pod. By default, the pod name is in the format of
 // JobID-<InstanceID>.
+// Pod 名字 = 任务ID + 实例ID
 message PodName {
   string value = 1;
 }
@@ -54,6 +56,7 @@ message HostOfferID {
 // (i.e. there is a write-after-read confliect), unless otherwise specified.
 // Upon receiving the error, caller is expected to read the entity status
 // and its entity version again, and re-perform the operation if needed.
+// 实体版本
 message EntityVersion {
   string value = 1;
 }
@@ -65,6 +68,7 @@ message OpaqueData {
 }
 
 // Revision of an entity info, such as JobSpec etc.
+// 版本
 message Revision {
   // Version number of the entity info which is monotonically increasing.
   // Clients can use this to guide against race conditions using MVCC.
@@ -81,6 +85,7 @@ message Revision {
 }
 
 // Key, value pair used to store free form user-data.
+// 标签
 message Label {
   string key = 1;
   string value = 2;
@@ -114,6 +119,7 @@ message Secret {
 
 
 // Resources describe the resources on a host.
+// 资源
 message Resources {
   // Number of CPU cores.
   double cpu = 1;

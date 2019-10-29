@@ -21,12 +21,15 @@ import (
 
 // Policy is the interface for calculating the next duration for the
 // back off time based on its implementation.
+// 策略接口
 type Policy interface {
 	// GetNextBackoffDuration returns the next backoff duration
 	// based on policy implementation
 	GetNextBackoffDuration(task *resmgr.Task, config *Config) float64
+
 	// IsCycleCompleted returns true when one placement cycle has been completed
 	IsCycleCompleted(task *resmgr.Task, config *Config) bool
+
 	// allCyclesCompleted returns true when all the placement cycles have been completed
 	allCyclesCompleted(task *resmgr.Task, config *Config) bool
 }
@@ -46,12 +49,13 @@ func (p exponentialPolicy) GetNextBackoffDuration(task *resmgr.Task, config *Con
 	if task == nil || config == nil {
 		return 0
 	}
+
 	// if PlacementAttemptsPerCycle or PlacementRetryBackoff is 0
 	// then next timeout period will be 0
-
 	if config.PlacementAttemptsPerCycle == 0 || config.PlacementRetryBackoff.Seconds() == 0 {
 		return 0
 	}
+
 	// exponentialPolicy multiply the number of retries with backoff period
 	// till it reaches to end of the cycle. After cycle is finished
 	// backoff will start all over again
@@ -61,6 +65,7 @@ func (p exponentialPolicy) GetNextBackoffDuration(task *resmgr.Task, config *Con
 }
 
 // IsCycleCompleted returns true/false to indicate if a placement cycle is complete based on backoff policy cycle.
+// 是否任务运行次数到达配置的最大次数
 func (p exponentialPolicy) IsCycleCompleted(task *resmgr.Task, config *Config) bool {
 	// Backoff cycle will return true when attempts in a cycle reaches to placement attempts.
 	// else it returns false.
@@ -68,10 +73,13 @@ func (p exponentialPolicy) IsCycleCompleted(task *resmgr.Task, config *Config) b
 		config.PlacementAttemptsPerCycle) == 0 {
 		return true
 	}
+
+    // 无阈值或者未到阈值
 	return false
 }
 
 //  returns true/false to indicate if all placement cycles have been exhausted
+// 是否到达阈值
 func (p exponentialPolicy) allCyclesCompleted(task *resmgr.Task, config *Config) bool {
 	// Backoff cycle will return true when cycle retry count reaches to placement retry cycle.
 	// else it returns false.
@@ -81,5 +89,6 @@ func (p exponentialPolicy) allCyclesCompleted(task *resmgr.Task, config *Config)
 			config.PlacementRetryCycle*config.PlacementAttemptsPerCycle) == 0 {
 		return true
 	}
+
 	return false
 }

@@ -22,8 +22,10 @@ type lessFunc func(p1, p2 interface{}) bool
 // it will sort the array of interfaces based on ordered list
 type MultiKeySorter struct {
 	// List of  interfaces
+	// 数据数组
 	List []interface{}
 	// list of functions which will be called by OrderedBy
+	// 比较函数
 	less []lessFunc
 }
 
@@ -58,6 +60,7 @@ func (ms *MultiKeySorter) Swap(i, j int) {
 // Less is part of sort.Interface. It is implemented by looping along the
 // less functions until it finds a comparison that discriminates between
 // the two items (one is less than the other).
+// 比较
 func (ms *MultiKeySorter) Less(i, j int) bool {
 	p, q := ms.List[i], ms.List[j]
 	// Try all but the last comparison.
@@ -70,13 +73,16 @@ func (ms *MultiKeySorter) Less(i, j int) bool {
 		switch {
 		case less(p, q):
 			// p < q, so we have a decision.
+			// 小于
 			return true
 		case less(q, p):
 			// p > q, so we have a decision.
 			// that p greater then q
+			// 大于
 			return false
 		}
 		// p == q; try the next comparison.
+		// 试一下下一个比较函数
 	}
 	// All comparisons to here said "equal", so just return whatever
 	// the final comparison reports.

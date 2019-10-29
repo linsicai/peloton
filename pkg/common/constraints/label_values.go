@@ -38,20 +38,27 @@ type LabelValues map[string]map[string]uint32
 func (lv LabelValues) Merge(additionalLV LabelValues) {
 	for label, origin := range additionalLV {
 		if origin == nil {
+		    // pass 空值
 			continue
 		}
+
+		// 负责值
 		copy := make(map[string]uint32)
 		for value, count := range origin {
 			copy[value] = count
 		}
+
 		if _, ok := lv[label]; !ok {
+		    // 新key
 			lv[label] = copy
 			continue
 		}
 		for v, c := range copy {
 			if current, ok := lv[label][v]; !ok {
+			    // 新的
 				lv[label][v] = c
 			} else {
+			    // 累加
 				lv[label][v] = current + c
 			}
 		}
@@ -68,14 +75,17 @@ func GetHostLabelValues(
 
 	result := make(map[string]map[string]uint32)
 	result[common.HostNameKey] = map[string]uint32{hostname: 1}
+
 OUTER:
 	for _, attr := range attributes {
 		key := attr.GetName()
 		values := []string{}
 		switch attr.GetType() {
 		case mesos.Value_TEXT:
+		    // 文本
 			values = append(values, attr.GetText().GetValue())
 		case mesos.Value_SCALAR:
+		    // 数值
 			value := strconv.FormatFloat(
 				attr.GetScalar().GetValue(),
 				'f',
@@ -83,10 +93,12 @@ OUTER:
 				_bitsize)
 			values = append(values, value)
 		case mesos.Value_SET:
+		    // 列表
 			for _, value := range attr.GetSet().GetItem() {
 				values = append(values, value)
 			}
 		default:
+		    // 不支持
 			// TODO: Add support for range attributes.
 			log.WithFields(log.Fields{
 				"key":  key,

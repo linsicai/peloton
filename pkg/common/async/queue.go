@@ -25,6 +25,8 @@ type Queue interface {
 	// Run runs the Queue and will stop the Queue if the stopChan provided
 	// is closed
 	Run(stopChan chan struct{})
+
+    // 入队列和出队列
 	// Enqueue is used to enqueue a job
 	Enqueue(job Job)
 	// Dequeue is used to fetch an enqueued job when a worker is available
@@ -60,13 +62,14 @@ func (q *queue) Run(stopChan chan struct{}) {
 
 	go func() {
 		for {
+		    // 加锁取任务
 			q.Lock()
-
 			f := q.list.Front()
 			if f == nil {
 				q.Unlock()
 
 				// Wait for jobs to be enqueued before continuing.
+				// 等信号
 				<-q.enqueueSignal
 				continue
 			}
@@ -76,8 +79,10 @@ func (q *queue) Run(stopChan chan struct{}) {
 
 			select {
 			case q.dequeueChannel <- f.Value.(Job):
+			    // 取任务入出队列
 				continue
 			case <-stopChan:
+			    // 关闭入队信号，退出
 				close(q.dequeueChannel)
 				return
 			}
@@ -88,11 +93,13 @@ func (q *queue) Run(stopChan chan struct{}) {
 
 // Enqueue the Job. This method will return immediately.
 func (q *queue) Enqueue(job Job) {
+    // 加锁，入队列
 	q.Lock()
 	q.list.PushBack(job)
 	q.Unlock()
 
 	// Try signal a new items is available.
+	// 发信号
 	select {
 	case q.enqueueSignal <- struct{}{}:
 	default:
@@ -101,5 +108,6 @@ func (q *queue) Enqueue(job Job) {
 
 // Dequeue the Job.
 func (q *queue) Dequeue() Job {
+    // 取任务
 	return <-q.dequeueChannel
 }

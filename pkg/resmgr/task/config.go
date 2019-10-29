@@ -17,15 +17,20 @@ package task
 import "time"
 
 // Config is Resource Manager Task specific configuration
+// 各种状态的超时时间
 type Config struct {
 	// Timeout for rm task in statemachine from launching to ready state
 	LaunchingTimeout time.Duration `yaml:"launching_timeout"`
+
 	// Timeout for rm task in statemachine from placing to ready state
 	PlacingTimeout time.Duration `yaml:"placing_timeout"`
+
 	// Timeout for rm task in statemachine from preempting to running state
 	PreemptingTimeout time.Duration `yaml:"preempting_timeout"`
+
 	// Timeout for rm task in statemachine from reserved to pending state
 	ReservingTimeout time.Duration `yaml:"reserving_timeout"`
+
 	// This is the backoff period how much it will backoff
 	// in each retry attempt.
 	PlacementRetryBackoff time.Duration `yaml:"placement_retry_backoff"`
@@ -34,6 +39,7 @@ type Config struct {
 	// This is number of cycles which placement is going to repeat and
 	// unplaced tasks after that are qualified for host reservation.
 	PlacementRetryCycle float64 `yaml:"placement_retry_cycle"`
+
 	// This is the policy name for the backoff
 	// which is going to dictate the backoff
 	PolicyName string `yaml:"backoff_policy_name"`

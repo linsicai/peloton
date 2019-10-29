@@ -25,6 +25,7 @@ import (
 )
 
 const (
+    // 分隔符
 	ThermosExecutorDelimiter     = ","
 	ThermosExecutorIDPlaceholder = "PLACEHOLDER"
 )
@@ -47,14 +48,15 @@ type ThermosExecutorConfig struct {
 	//   The number of CPU cores to allocate for each instance of the executor.
 	// ram:
 	//   The amount of RAM in MB to allocate for each instance of the executor.
-	Path      string  `yaml:"path"`
-	Resources string  `yaml:"resources"`
-	Flags     string  `yaml:"flags"`
-	CPU       float64 `yaml:"cpu"`
-	RAM       int64   `yaml:"ram"`
+	Path      string  `yaml:"path"` // 路径
+	Resources string  `yaml:"resources"` // 资源
+	Flags     string  `yaml:"flags"` ：// 标记
+	CPU       float64 `yaml:"cpu"` // CPU
+	RAM       int64   `yaml:"ram"` // 内存
 }
 
 // Validate validates ThermosExecutorConfig
+// 验证
 func (c ThermosExecutorConfig) Validate() error {
 	if c.Path == "" {
 		return fmt.Errorf("thermos_executor_path not provided")
@@ -66,6 +68,7 @@ func (c ThermosExecutorConfig) Validate() error {
 // similar to Aurora's behavior. Reference:
 // https://github.com/apache/aurora/blob/master/src/main/java/org/apache/aurora/scheduler/configuration/executor/ExecutorModule.java#L120
 func (c ThermosExecutorConfig) NewThermosCommandInfo() *mesos_v1.CommandInfo {
+    // 资源列表
 	resourcesToFetch := []string{c.Path}
 	if c.Resources != "" {
 		resourcesToFetch = append(
@@ -74,6 +77,7 @@ func (c ThermosExecutorConfig) NewThermosCommandInfo() *mesos_v1.CommandInfo {
 		)
 	}
 
+    // 拼mesos 资源uri
 	var mesosUris []*mesos_v1.CommandInfo_URI
 	for _, r := range resourcesToFetch {
 		mesosUris = append(mesosUris, &mesos_v1.CommandInfo_URI{
@@ -82,6 +86,7 @@ func (c ThermosExecutorConfig) NewThermosCommandInfo() *mesos_v1.CommandInfo {
 		})
 	}
 
+    // 路径与标记
 	var b strings.Builder
 	b.WriteString("${MESOS_SANDBOX=.}/")
 	b.WriteString(path.Base(c.Path))
@@ -89,6 +94,7 @@ func (c ThermosExecutorConfig) NewThermosCommandInfo() *mesos_v1.CommandInfo {
 	b.WriteString(c.Flags)
 	mesosValue := strings.TrimSpace(b.String())
 
+    // 真实命令
 	return &mesos_v1.CommandInfo{
 		Uris:  mesosUris,
 		Shell: ptr.Bool(true),
@@ -100,6 +106,7 @@ func (c ThermosExecutorConfig) NewThermosCommandInfo() *mesos_v1.CommandInfo {
 func (c ThermosExecutorConfig) NewThermosExecutorInfo(executorData []byte) *mesos_v1.ExecutorInfo {
 	var r []*mesos_v1.Resource
 	if c.CPU > 0 {
+	    // cpu
 		r = append(r, &mesos_v1.Resource{
 			Type: mesos_v1.Value_SCALAR.Enum(),
 			Name: ptr.String("cpus"),
@@ -109,6 +116,7 @@ func (c ThermosExecutorConfig) NewThermosExecutorInfo(executorData []byte) *meso
 		})
 	}
 	if c.RAM > 0 {
+	    // 内存
 		r = append(r, &mesos_v1.Resource{
 			Type: mesos_v1.Value_SCALAR.Enum(),
 			Name: ptr.String("mem"),
@@ -119,6 +127,7 @@ func (c ThermosExecutorConfig) NewThermosExecutorInfo(executorData []byte) *meso
 	}
 
 	// ExecutorId will be filled by hostmgr during task launch.
+	// 执行信息
 	return &mesos_v1.ExecutorInfo{
 		Type: mesos_v1.ExecutorInfo_CUSTOM.Enum(),
 		ExecutorId: &mesos_v1.ExecutorID{

@@ -33,18 +33,24 @@ func Retry(f Retryable, p RetryPolicy, isRetryable IsErrorRetryable) error {
 	r := NewRetrier(p)
 	for {
 		// function executed successfully. no need to retry.
+		// 执行
 		if err = f(); err == nil {
+		    // 成功
 			return nil
 		}
 
+        // 看是否需要重试
 		if backoff = r.NextBackOff(); backoff == done {
+			// 不能重试
 			return err
 		}
 
+        // 校验是否可重试错误
 		if isRetryable != nil && !isRetryable(err) {
 			return err
 		}
 
+        // 休息一会
 		time.Sleep(backoff)
 	}
 }
@@ -55,9 +61,12 @@ func Retry(f Retryable, p RetryPolicy, isRetryable IsErrorRetryable) error {
 func CheckRetry(r Retrier) bool {
 	var backoff time.Duration
 
+    // 校验是否可以重试
 	if backoff = r.NextBackOff(); backoff == done {
 		return false
 	}
+
+    // 休眠
 	time.Sleep(backoff)
 	return true
 }

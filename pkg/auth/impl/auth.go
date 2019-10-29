@@ -23,6 +23,7 @@ import (
 )
 
 // CreateNewSecurityManager creates SecurityManager based on type
+// 创建安全管理类
 func CreateNewSecurityManager(config *auth.Config) (auth.SecurityManager, error) {
 	switch config.AuthType {
 	case auth.NOOP, auth.UNDEFINED:
@@ -36,6 +37,7 @@ func CreateNewSecurityManager(config *auth.Config) (auth.SecurityManager, error)
 }
 
 // CreateNewSecurityClient creates SecurityClient based on type
+// 创建安全客户端
 func CreateNewSecurityClient(config *auth.Config) (auth.SecurityClient, error) {
 	switch config.AuthType {
 	case auth.NOOP, auth.UNDEFINED:

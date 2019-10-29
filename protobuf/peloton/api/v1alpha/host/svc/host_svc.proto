@@ -10,6 +10,7 @@ package peloton.api.v1alpha.host.svc;
 import "peloton/api/v1alpha/host/host.proto";
 
 // Request message for HostService.QueryHosts method.
+// 状态列表
 message QueryHostsRequest {
     // List of host states to query the hosts.
     // Will return all hosts if the list is empty.
@@ -18,12 +19,14 @@ message QueryHostsRequest {
 
 // Response message for HostService.QueryHosts method.
 // Return errors:
+// 主机信息列表
 message QueryHostsResponse {
     // List of hosts that match the host query criteria.
     repeated host.HostInfo host_infos = 1;
 }
 
 // Request message for HostService.StartMaintenance method.
+// 维护主机
 message StartMaintenanceRequest {
     // List of hosts to be put into maintenance
     repeated string hostnames = 1 [deprecated=true];
@@ -36,12 +39,14 @@ message StartMaintenanceRequest {
 // Response message for HostService.StartMaintenance method.
 // Return errors:
 //   NOT_FOUND:   if the host is not found.
+// 成功主机
 message StartMaintenanceResponse {
     // Host successfully submitted for maintenance
     string hostname = 1;
 }
 
 // Request message for HostService.CompleteMaintenance method.
+// 完成维护请求
 message CompleteMaintenanceRequest {
     // List of hosts put be brought back up
     repeated string hostnames = 1 [deprecated=true];
@@ -62,12 +67,14 @@ message ListHostPoolsRequest {}
 
 // Response message for HostService.ListHostPoolsRequest method.
 // Return errors:
+// 主机池列表
 message ListHostPoolsResponse {
     // Information about all pools
     repeated host.HostPoolInfo pools = 1;
 }
 
 // Request message for HostService.CreateHostPool method.
+// 创建主机池
 message CreateHostPoolRequest {
     // Name of the pool to create.
     string name = 1;
@@ -80,6 +87,7 @@ message CreateHostPoolRequest {
 message CreateHostPoolResponse {}
 
 // Request message for HostService.DeleteHostPool method.
+// 删除主机池
 message DeleteHostPoolRequest {
     // Name of the pool to delete.
     string name = 1;
@@ -92,6 +100,7 @@ message DeleteHostPoolRequest {
 message DeleteHostPoolResponse {}
 
 // Request message for HostService.ChangeHostPool method.
+// 主机池移动
 message ChangeHostPoolRequest {
     // Hostname of host to move.
     string hostname = 1;

@@ -19,6 +19,7 @@ import (
 )
 
 const (
+    // 完成
 	done time.Duration = -1
 )
 
@@ -35,9 +36,10 @@ func NewRetrier(policy RetryPolicy) Retrier {
 	}
 }
 
+// 重试者
 type retrierImpl struct {
-	policy         RetryPolicy
-	currentAttempt int
+	policy         RetryPolicy // 策略
+	currentAttempt int // 已经重试次数
 }
 
 // NextBackOff returns the next delay interval.
@@ -61,16 +63,19 @@ func NewRetryPolicy(maxAttempts int, retryInterval time.Duration) RetryPolicy {
 	}
 }
 
+// 重试策略
 type retryPolicy struct {
-	maxAttempts   int
-	retryInterval time.Duration
+	maxAttempts   int // 最大尝试次数
+	retryInterval time.Duration // 重试间隔
 }
 
 // CalculateNextDelay returns next delay.
+// 下次重试时间
 func (p *retryPolicy) CalculateNextDelay(attempts int) time.Duration {
 	// TODO: add backoff into retry.
 	if attempts >= p.maxAttempts {
 		return done
 	}
+
 	return p.retryInterval
 }
