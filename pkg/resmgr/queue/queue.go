@@ -22,24 +22,32 @@ import (
 )
 
 // Queue is the interface implemented by all the the queues
+// 队列
 type Queue interface {
 	// Enqueue queues a gang (task list gang) based on its priority into FIFO queue
 	Enqueue(gang *resmgrsvc.Gang) error
 	// Dequeue dequeues the gang (task list gang) based on the priority and order
 	// they came into the queue
 	Dequeue() (*resmgrsvc.Gang, error)
+
 	// Peek peeks the gang(list) based on the priority and order
 	// they came into the queue.
 	// limit is the number of gangs to peek.
 	// It will return an error if there is no gang in the queue
+	// 选取N 个
 	Peek(limit uint32) ([]*resmgrsvc.Gang, error)
+
 	// Remove removes the item from the queue
+	// 移出队列
 	Remove(item *resmgrsvc.Gang) error
+
 	// Size returns the total number of items in the queue
+	// 队列长度
 	Size() int
 }
 
 // CreateQueue is factory method to create the specified queue
+// 只支持先进先出类型队列
 func CreateQueue(policy respool.SchedulingPolicy, limit int64) (Queue, error) {
 	// Factory method to create specific queue object based on policy
 	switch policy {

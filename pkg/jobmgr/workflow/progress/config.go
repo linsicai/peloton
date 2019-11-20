@@ -22,7 +22,9 @@ const (
 )
 
 type Config struct {
+    // 校验间隔
 	WorkflowProgressCheckPeriod time.Duration `yaml:"workflow_progress_check_period"`
+
 	StaleWorkflowThreshold      time.Duration `yaml:"stale_workflow_threshold"`
 }
 

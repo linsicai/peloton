@@ -42,21 +42,26 @@ import (
 )
 
 const (
+    // 接口名字模版：服务::方法
 	_procedureNameTemplate = "%s::%s"
 )
 
 var (
 	// _encodingTypes contains a list of encoding types to build procedures
 	// with.
+	// 编码类型
 	_encodingTypes []transport.Encoding
 )
 
 //rpcService to build service procedures
+// rpc 服务
 type rpcService struct {
 	// RPC service name from pkg/common/constants.go
+	// 名字
 	name string
 	// Pointer to a (nil) instance of the server; used to fetch RPC API via
 	// reflection.
+	// 服务
 	server interface{}
 }
 

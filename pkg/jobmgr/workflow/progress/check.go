@@ -33,11 +33,17 @@ const _workflowProgressCheckName = "workflowProgressCheck"
 // And emit metrics if any workflow has not been updated within StaleWorkflowThreshold.
 // It is used to catch potential slow workflow and bugs in the system.
 type WorkflowProgressCheck struct {
+    // 存储器
 	JobFactory cached.JobFactory
+
+    // 指标
 	Metrics    *Metrics
+
+    // 配置
 	Config     *Config
 }
 
+// 注册校验函数
 func (u *WorkflowProgressCheck) Register(manager background.Manager) error {
 	if u.Config == nil {
 		u.Config = &Config{}
@@ -65,17 +71,21 @@ func (u *WorkflowProgressCheck) Check() {
 	stopWatch := u.Metrics.ProcessDuration.Start()
 	defer stopWatch.Stop()
 
+    // 遍历所有任务
 	jobs := u.JobFactory.GetAllJobs()
 	for _, cachedJob := range jobs {
 		// batch cachedJob does not have workflow attached, just skip
 		// the check
 		if cachedJob.GetJobType() == pbjob.JobType_BATCH {
+			// 跳过批量任务
 			continue
 		}
 
+        // 获取任务
 		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 		runtime, err := cachedJob.GetRuntime(ctx)
 		if err != nil {
+		    // 失败了
 			getJobRuntimeFailure++
 			log.WithField("job_id", cachedJob.ID().GetValue()).
 				WithError(err).
@@ -135,14 +145,18 @@ func isWorkflowStaleDueToTaskThrottling(
 	cachedJob cached.Job,
 	cachedWorkflow cached.Update,
 ) bool {
+    // 遍历流程
 	for _, instID := range cachedWorkflow.GetInstancesCurrent() {
+	    // 取任务
 		cachedTask := cachedJob.GetTask(instID)
 		if cachedTask == nil {
 			continue
 		}
 
+        // 获取运行信息
 		taskRuntime, err := cachedTask.GetRuntime(ctx)
 		if err != nil {
+		    // 告警
 			log.WithField("job_id", cachedJob.ID().GetValue()).
 				WithField("instance_id", instID).
 				WithError(err).
@@ -150,6 +164,7 @@ func isWorkflowStaleDueToTaskThrottling(
 			continue
 		}
 
+        // 不够了
 		if !util.IsTaskThrottled(taskRuntime.GetState(), taskRuntime.GetMessage()) {
 			return false
 		}

@@ -22,6 +22,8 @@ import (
 	"go.uber.org/yarpc/api/transport"
 )
 
+// 授权出流量中间件
+
 // AuthOutboundMiddleware is the outbound middleware for auth
 type AuthOutboundMiddleware struct {
 	auth.SecurityClient
@@ -33,7 +35,10 @@ func (a *AuthOutboundMiddleware) Call(
 	request *transport.Request,
 	out transport.UnaryOutbound,
 ) (*transport.Response, error) {
+    // 解码headers
 	request.Headers = getHeadersWithToken(request.Headers, a.GetToken())
+
+    // 调用输出
 	return out.Call(ctx, request)
 }
 

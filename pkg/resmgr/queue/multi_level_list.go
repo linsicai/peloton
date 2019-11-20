@@ -92,14 +92,23 @@ type MultiLevelList interface {
 // RemoveItems Operation is O(m) where m is the list size of specified level
 type multiLevelList struct {
 	// mutex for the multiLevelList
+	// 锁
 	sync.RWMutex
+
 	// name of the list
+	// 名字
 	name string
+
 	// map of lists for each level
+	// 每个等级一个列表
 	mapLists map[int]*list.List
+
 	// highest level at any given time
+	// 最高等级
 	highestLevel int
+
 	// max list size for any level
+	// 每个等级最大长度
 	limit int64
 }
 
@@ -122,9 +131,13 @@ func (p *multiLevelList) Push(level int, element interface{}) error {
 
 	p.Lock()
 	defer p.Unlock()
+
+    // 队列长度过长
 	if p.limit >= 0 && p.limit <= int64(p.size()) {
 		return fmt.Errorf("list size limit reached")
 	}
+
+    // 塞进队列
 	if val, ok := p.mapLists[level]; ok {
 		val.PushBack(element)
 	} else {
@@ -132,9 +145,12 @@ func (p *multiLevelList) Push(level int, element interface{}) error {
 		pList.PushBack(element)
 		p.mapLists[level] = pList
 	}
+
+    // 更新最大级别
 	if level > p.highestLevel {
 		p.highestLevel = level
 	}
+
 	return nil
 }
 
@@ -145,9 +161,13 @@ func (p *multiLevelList) PushList(level int, newlist *list.List) error {
 	// TODO: Need to take RLock on Map and Excusive lock on individual list
 	p.Lock()
 	defer p.Unlock()
+
+    // 长度校验
 	if p.limit >= 0 && p.limit < int64(p.size()+newlist.Len()) {
 		return fmt.Errorf("list size limit reached")
 	}
+
+    // 插入队列
 	if val, ok := p.mapLists[level]; ok {
 		val.PushBackList(newlist)
 	} else {
@@ -155,6 +175,8 @@ func (p *multiLevelList) PushList(level int, newlist *list.List) error {
 		pList.PushBackList(newlist)
 		p.mapLists[level] = pList
 	}
+
+    // 更新最高等级
 	if level > p.highestLevel {
 		p.highestLevel = level
 
@@ -166,15 +188,21 @@ func (p *multiLevelList) PushList(level int, newlist *list.List) error {
 func (p *multiLevelList) Pop(level int) (interface{}, error) {
 	p.Lock()
 	defer p.Unlock()
+
 	if val, ok := p.mapLists[level]; ok {
+	    // 出队列
 		e := val.Front().Value
 		val.Remove(val.Front())
+
 		if val.Len() == 0 {
+		    // 删除链表，更新等级
 			delete(p.mapLists, level)
 			p.highestLevel = p.calculateHighestLevel()
 		}
 		return e, nil
 	}
+
+    // 空队列
 	err := ErrorQueueEmpty(fmt.Sprintf("No items found in queue for priority %d", level))
 	return nil, err
 }
@@ -184,10 +212,13 @@ func (p *multiLevelList) Pop(level int) (interface{}, error) {
 func (p *multiLevelList) PeekItem(level int) (interface{}, error) {
 	p.RLock()
 	defer p.RUnlock()
+
+    // 选优先级队列头
 	if val, ok := p.mapLists[level]; ok {
 		e := val.Front().Value
 		return e, nil
 	}
+
 	err := ErrorQueueEmpty(fmt.Sprintf("No items found in queue for priority %d", level))
 	return nil, err
 }
@@ -201,11 +232,13 @@ func (p *multiLevelList) PeekItems(level int, limit int) ([]interface{}, error) 
 	defer p.RUnlock()
 	var elements []interface{}
 
+    // 找链表
 	val, ok := p.mapLists[level]
 	if !ok {
 		return elements, ErrorQueueEmpty(fmt.Sprintf("No items found in queue for priority %d", level))
 	}
 
+    // 遍历limit 值
 	for e := val.Front(); e != nil; e = e.Next() {
 		if e == nil {
 			continue
@@ -229,6 +262,7 @@ func (p *multiLevelList) Remove(
 	p.Lock()
 	defer p.Unlock()
 
+    // 遍历链表，删除指定值的节点
 	var itemRemoved = false
 	if l, ok := p.mapLists[level]; ok {
 		for e := l.Front(); e != nil; e = e.Next() {
@@ -244,6 +278,8 @@ func (p *multiLevelList) Remove(
 		err := ErrorQueueEmpty(fmt.Sprintf("No items found in queue %s", value))
 		return err
 	}
+
+    // 删除队列
 	if p.mapLists[level].Len() == 0 {
 		delete(p.mapLists, level)
 		p.highestLevel = p.calculateHighestLevel()
@@ -266,6 +302,7 @@ func (p *multiLevelList) RemoveItems(
 	p.Lock()
 	defer p.Unlock()
 
+    // 遍历链表，删除节点
 	if l, ok := p.mapLists[level]; ok {
 		var next *list.Element
 		for e := l.Front(); e != nil; e = next {
@@ -282,6 +319,8 @@ func (p *multiLevelList) RemoveItems(
 		err := ErrorQueueEmpty("No items found in queue for given level")
 		return false, newValuesMap, err
 	}
+
+    // 删除链表
 	if p.mapLists[level].Len() == 0 {
 		delete(p.mapLists, level)
 		p.highestLevel = p.calculateHighestLevel()
@@ -290,6 +329,7 @@ func (p *multiLevelList) RemoveItems(
 }
 
 // IsEmpty method checks if the list for specified level is empty in multilevel list
+// 判空
 func (p *multiLevelList) IsEmpty(level int) bool {
 	p.RLock()
 	defer p.RUnlock()
@@ -302,6 +342,7 @@ func (p *multiLevelList) IsEmpty(level int) bool {
 }
 
 // Levels returns all the current levels in the list.
+// 返回等级列表
 func (p *multiLevelList) Levels() []int {
 	p.RLock()
 	defer p.RUnlock()
@@ -317,12 +358,15 @@ func (p *multiLevelList) Levels() []int {
 func (p *multiLevelList) Len(level int) int {
 	p.RLock()
 	defer p.RUnlock()
+
 	if val, ok := p.mapLists[level]; ok {
 		return val.Len()
 	}
+
 	return 0
 }
 
+// 计算大小：所有链表求和
 func (p *multiLevelList) size() int {
 	len := 0
 	for _, val := range p.mapLists {
@@ -335,10 +379,12 @@ func (p *multiLevelList) size() int {
 func (p *multiLevelList) Size() int {
 	p.RLock()
 	defer p.RUnlock()
+
 	return p.size()
 }
 
 // calculateHighestLevel returns highest level in the multilevel list
+// 找最大等级
 func (p *multiLevelList) calculateHighestLevel() int {
 	// TODO: we also can use heap for index to scan it Which can help getting the highest level in in O(1)
 	// We will try to find if there is any regression then we will move with heap approach

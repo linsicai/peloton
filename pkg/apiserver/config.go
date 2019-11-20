@@ -17,8 +17,10 @@ package apiserver
 // Config contains APIServer specific configuration
 type Config struct {
 	// HTTP port which API Server is listening on
+	// http 端口
 	HTTPPort int `yaml:"http_port"`
 
 	// gRPC port which API Server is listening on
+	// grpc 端口
 	GRPCPort int `yaml:"grpc_port"`
 }

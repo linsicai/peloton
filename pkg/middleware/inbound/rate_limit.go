@@ -25,7 +25,12 @@ import (
 
 var rateLimitError = yarpcerrors.ResourceExhaustedErrorf("rate limit reached for the endpoint")
 
+// 纬度：服务名+方法
+// 控制：单位间隔内的速度
+
+// 速率限制中间件
 type RateLimitInboundMiddleware struct {
+    // 开关
 	enabled bool
 
 	// key is service Name, value rateLimiter in the
@@ -36,6 +41,7 @@ type RateLimitInboundMiddleware struct {
 
 type rateLimiter struct {
 	*rate.Limiter
+
 	// rule is method name with wildcard (e.g. GetJob, Get*, List*, *).
 	// if a certain method matches the rule, then that method would use
 	// the *rate.Limiter associated with the rule.
@@ -52,6 +58,7 @@ type TokenBucket struct {
 	// Rate for the token bucket rate limit algorithm,
 	// If Rate < 0, there would be no rate limit
 	Rate rate.Limit
+
 	// Burst for the token bucket rate limit algorithm,
 	// If Burst < 0, there would be no rate limit
 	Burst int
@@ -59,6 +66,7 @@ type TokenBucket struct {
 
 type RateLimitConfig struct {
 	Enabled bool
+
 	// Methods is evaluated from top to down, and the first matched
 	// config is applied
 	Methods []struct {

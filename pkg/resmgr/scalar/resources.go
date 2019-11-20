@@ -176,6 +176,7 @@ func (r *Resources) GetGPU() float64 {
 }
 
 // Get returns the kind of resource
+// 获取值
 func (r *Resources) Get(kind string) float64 {
 	switch kind {
 	case common.CPU:
@@ -191,6 +192,7 @@ func (r *Resources) Get(kind string) float64 {
 }
 
 // Set sets the kind of resource with the Value
+// 设置值
 func (r *Resources) Set(kind string, value float64) {
 	switch kind {
 	case common.CPU:
@@ -205,6 +207,7 @@ func (r *Resources) Set(kind string, value float64) {
 }
 
 // Add atomically add another scalar resources onto current one.
+// 做加法
 func (r *Resources) Add(other *Resources) *Resources {
 	return &Resources{
 		CPU:    r.CPU + other.CPU,
@@ -224,6 +227,8 @@ func lessThanOrEqual(f1, f2 float64) bool {
 
 // LessThanOrEqual determines current Resources is less than or equal
 // the other one.
+// 资源比较
+// 优先级：cpu、内存、磁盘、gpu
 func (r *Resources) LessThanOrEqual(other *Resources) bool {
 	return lessThanOrEqual(r.CPU, other.CPU) &&
 		lessThanOrEqual(r.MEMORY, other.MEMORY) &&
@@ -255,6 +260,7 @@ func ConvertToResmgrResource(resource *task.ResourceConfig) *Resources {
 }
 
 // GetGangResources aggregates gang resources to resmgr resources
+// 计算gang 的总资源
 func GetGangResources(gang *resmgrsvc.Gang) *Resources {
 	if gang == nil {
 		return nil
@@ -267,12 +273,14 @@ func GetGangResources(gang *resmgrsvc.Gang) *Resources {
 	return totalRes
 }
 
+// 字符串描述
 func (r *Resources) String() string {
 	return fmt.Sprintf("CPU:%.2f MEM:%.2f DISK:%.2f GPU:%.2f",
 		r.GetCPU(), r.GetMem(), r.GetDisk(), r.GetGPU())
 }
 
 // Min Gets the minimum value for each resource type
+// 取资源
 func Min(r1, r2 *Resources) *Resources {
 	return &Resources{
 		CPU:    math.Min(r1.GetCPU(), r2.GetCPU()),
@@ -283,6 +291,7 @@ func Min(r1, r2 *Resources) *Resources {
 }
 
 // Subtract another scalar resources from current one and return a new copy of result.
+// 做减法r - other
 func (r *Resources) Subtract(other *Resources) *Resources {
 	var result Resources
 	if r.CPU < other.CPU {
