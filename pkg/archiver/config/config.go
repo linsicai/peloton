@@ -26,21 +26,36 @@ import (
 
 const (
 	// run archiver every 24 hours
+	// 默认备份间隔
 	_defaultArchiveInterval = 24 * time.Hour
+
 	// archive jobs over 1 day
+	// 备份步长
 	_defaultArchiveStepSize = 24 * time.Hour
+
 	// archive maximum 5000 jobs at a time
+	// 每次备份实体个数
 	_defaultMaxArchiveEntries = 5000
+
 	// start archiving jobs that have completed 30 days ago
+	// 
 	_defaultArchiveAge = 720 * time.Hour
+
 	// peloton client timeout for Job Query/Delete API
+	// 超时时间
 	_defaultPelotonClientTimeout = 20 * time.Second
+
 	// default retry attempts for job query
+	// 重试次数
 	_defaultMaxRetryAttemptsJobQuery = 3
+
 	// default backoff for job query
+	// 重试间隔
 	_defaultRetryIntervalJobQuery = 10 * time.Second
+
 	// default delay when bootstrapping the archiver
 	// to account for not overloading jobmgr during recovery
+	// 预热时间
 	_defaultBootstrapDelay = 180 * time.Second
 
 	// PelotonArchiver application name
@@ -60,6 +75,7 @@ type Config struct {
 // ArchiverConfig contains archiver specific configuration
 type ArchiverConfig struct {
 	// enabled flag to toggle archiving
+	// 开关
 	Enable bool `yaml:"enable"`
 
 	// Flag to constraint pod events
@@ -108,6 +124,7 @@ type ArchiverConfig struct {
 }
 
 // Normalize configuration by setting unassigned fields to default values.
+// 默认配置
 func (c *ArchiverConfig) Normalize() {
 	if c.ArchiveInterval == 0 {
 		c.ArchiveInterval = _defaultArchiveInterval

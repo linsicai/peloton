@@ -16,6 +16,7 @@ package models
 
 // PortRange represents a modifiable closed-open port range [Begin:End[
 // used when assigning ports to tasks.
+// 端口范围
 type PortRange struct {
 	Begin uint64
 	End   uint64
@@ -31,6 +32,7 @@ func NewPortRange(begin, end uint64) *PortRange {
 }
 
 // NumPorts returns the number of available ports in the range.
+// 端口数量
 func (portRange *PortRange) NumPorts() uint64 {
 	return portRange.End - portRange.Begin
 }
@@ -40,13 +42,19 @@ func (portRange *PortRange) NumPorts() uint64 {
 func (portRange *PortRange) TakePorts(numPorts uint64) []uint64 {
 	// Try to select ports in a random fashion to avoid ports conflict.
 	ports := make([]uint64, 0, numPorts)
+
+    // 计算停止位
 	stop := portRange.Begin + numPorts
 	if numPorts >= portRange.NumPorts() {
 		stop = portRange.End
 	}
+
+    // 计算拿走的端口
 	for i := portRange.Begin; i < stop; i++ {
 		ports = append(ports, i)
 	}
+
+    // 更新开始位置
 	portRange.Begin = stop
 	return ports
 }
@@ -56,27 +64,40 @@ func AssignPorts(
 	offer Offer,
 	tasks []Task,
 ) []uint64 {
+    // 可用端口范围
 	availablePortRanges := offer.AvailablePortRanges()
 
+    // 遍历任务
 	var selectedPorts []uint64
 	for _, taskEntity := range tasks {
+	    // 已分配端口数
 		assignedPorts := uint64(0)
+
+		// 获取任务需要端口数
 		neededPorts := taskEntity.GetPlacementNeeds().Ports
+
+		// 遍历可用端口范围
 		depletedRanges := []*PortRange{}
 		for portRange := range availablePortRanges {
+			// 尝试分配
 			ports := portRange.TakePorts(neededPorts - assignedPorts)
 			assignedPorts += uint64(len(ports))
 			selectedPorts = append(selectedPorts, ports...)
 			if portRange.NumPorts() == 0 {
+			    // 如果范围用完了，记录下，后续删除
 				depletedRanges = append(depletedRanges, portRange)
 			}
 			if assignedPorts >= neededPorts {
+				// 已分配完
 				break
 			}
 		}
+
+        // 删除可用端口范围
 		for _, portRange := range depletedRanges {
 			delete(availablePortRanges, portRange)
 		}
 	}
+
 	return selectedPorts
 }

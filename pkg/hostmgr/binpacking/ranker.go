@@ -23,14 +23,19 @@ import (
 // it returns the list of ordered list of hosts summary. Caller of the
 // interface would get the list of ordered host summary and then match the
 // host from 0->n to match the constraints with offer.
+// 排序接口
 type Ranker interface {
 	// Returns the name of the ranker implementation
+	// 名字
 	Name() string
+
 	// returns the list of ranked ordered list
+	// 主机排序
 	GetRankedHostList(
 		ctx context.Context,
 		offerIndex map[string]summary.HostSummary,
 	) []interface{}
+
 	// Refreshes the ranker based on new host summary index
 	// we need to call this asynchronously to mitigate the
 	// performance penalty of bin packing.

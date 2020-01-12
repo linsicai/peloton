@@ -24,9 +24,11 @@ import (
 // Config is Host Manager specific configuration
 type Config struct {
 	// HTTP port which hostmgr is listening on
+	// http 接口
 	HTTPPort int `yaml:"http_port"`
 
 	// GRPC port which hostmgr is listening on
+	// grpc 接口
 	GRPCPort int `yaml:"grpc_port"`
 
 	// Time to hold offer for in seconds

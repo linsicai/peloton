@@ -39,6 +39,7 @@ func (f *firstFitRanker) Name() string {
 // GetRankedHostList is implementation of Ranker.GetRankedHostList
 // This returns the list ordered by Map.
 // FirstFit implementation would be first host which can be fit
+// 返回顺序即map 顺序
 func (f *firstFitRanker) GetRankedHostList(
 	ctx context.Context,
 	offerIndex map[string]summary.HostSummary) []interface{} {

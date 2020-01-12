@@ -28,6 +28,7 @@ import (
 
 const (
 	_rpcTimeout = 15 * time.Second
+
 	// _maxTryTimeout is of unit of seconds, 300 seconds
 	_maxTryTimeout = float64(300)
 )
@@ -35,11 +36,16 @@ const (
 // loadAwareRanker is the struct for implementation of
 // LoadAware Ranker
 type loadAwareRanker struct {
-	mu             sync.RWMutex
-	name           string
-	summaryList    []interface{}
+	mu             sync.RWMutex // 锁
+	name           string // 名字
+
+	summaryList    []interface{} // 
+
+    // qos 客户端
 	cqosClient     cqos.QoSAdvisorServiceYARPCClient
 	cqosLastUpTime time.Time
+
+    // qos 指标
 	cqosMetrics    *metrics.Metrics
 }
 
@@ -96,18 +102,22 @@ func (l *loadAwareRanker) RefreshRanking(
 
 // getRankedHostList sorts the offer index to one criteria, Load from CQos
 // a int32 type
+// 排序
 func (l *loadAwareRanker) getRankedHostList(
 	ctx context.Context,
 	offerIndex map[string]summary.HostSummary,
 ) []interface{} {
+    // 复制
 	var summaryList []interface{}
 	offerIndexCopy := make(map[string]summary.HostSummary, len(offerIndex))
 	for key, value := range offerIndex {
 		offerIndexCopy[key] = value
 	}
+
 	//get the host Load map from cQos
 	//loop through the hosts summary map
 	//and sort the host summary map according to the host Load map
+	// 查询qos
 	loadMap, err := l.pollFromCQos(ctx)
 	if err != nil {
 		l.cqosMetrics.GetCqosAdvisorMetricFail.Inc(1)
@@ -126,6 +136,7 @@ func (l *loadAwareRanker) getRankedHostList(
 	l.cqosMetrics.GetCqosAdvisorMetric.Inc(1)
 
 	// loadHostMap key is the Load, value is an array of hosts of this Load
+	// 粗排
 	loadHostMap := l.bucketSortByLoad(loadMap)
 	var hostLoadOrderedList []hostLoad
 	// loop through the hosts of same Load
@@ -162,6 +173,7 @@ func (l *loadAwareRanker) getRankedHostList(
 // the Load will be [0..100]
 // map looks like 0 => {host1, host2}
 //                1 => {host3}...
+// 粗排，分数 to 列表
 func (l *loadAwareRanker) bucketSortByLoad(
 	loadMap *cqos.GetHostMetricsResponse) map[int32][]hostLoad {
 	// loadHostMap records Load to hosts of the same Load
@@ -174,6 +186,7 @@ func (l *loadAwareRanker) bucketSortByLoad(
 	return loadHostMap
 }
 
+// 调用rpc 获取各个主机的指标
 func (l *loadAwareRanker) pollFromCQos(ctx context.Context) (*cqos.
 	GetHostMetricsResponse, error) {
 	req := &cqos.GetHostMetricsRequest{}
@@ -197,6 +210,7 @@ func (l *loadAwareRanker) pollFromCQos(ctx context.Context) (*cqos.
 }
 
 // return a random host summarylist
+// 随机排序
 func (l *loadAwareRanker) getRandomHostList(
 	offerIndex map[string]summary.HostSummary) []interface{} {
 	var summaryList []interface{}

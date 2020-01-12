@@ -33,18 +33,25 @@ import (
 )
 
 const (
+    // 超时时间
 	_timeout               = 10 * time.Second
+
+    // 入出队列错误
 	_failedToEnqueueTasks  = "failed to enqueue tasks back to resource manager"
 	_failedToDequeueTasks  = "failed to dequeue tasks from resource manager"
+
+    // 部署出错
 	_failedToSetPlacements = "failed to set placements"
 )
 
 // Service will manage gangs/tasks and placements used by any placement strategy.
 type Service interface {
 	// Dequeue fetches some tasks from the service.
+	// 出队列
 	Dequeue(ctx context.Context, taskType resmgr.TaskType, batchSize int, timeout int) (assignments []models.Task)
 
 	// SetPlacements sets successful and unsuccessful placements back to the service.
+	// 设置任务布局
 	SetPlacements(
 		ctx context.Context,
 		successFullPlacements []models.Task,
@@ -65,8 +72,13 @@ func NewService(
 }
 
 type service struct {
+    // 布局配置
 	config          *config.PlacementConfig
+
+    // 资源管理器
 	resourceManager resmgrsvc.ResourceManagerServiceYARPCClient
+
+    // 指标
 	metrics         *metrics.Metrics
 }
 
@@ -76,15 +88,18 @@ func (s *service) Dequeue(
 	taskType resmgr.TaskType,
 	batchSize int,
 	timeout int) []models.Task {
+	// 创建上下文
 	ctx, cancelFunc := context.WithTimeout(ctx, _timeout)
 	defer cancelFunc()
 
+    // 构建资源请求
 	request := &resmgrsvc.DequeueGangsRequest{
 		Limit:   uint32(batchSize),
 		Type:    taskType,
 		Timeout: uint32(timeout),
 	}
 
+    // 从资源管理器拉取任务
 	response, err := s.resourceManager.DequeueGangs(ctx, request)
 	if err != nil {
 		log.WithFields(log.Fields{
@@ -96,6 +111,7 @@ func (s *service) Dequeue(
 		return nil
 	}
 
+    // 日志
 	if response.GetError() != nil {
 		log.WithFields(log.Fields{
 			"task_type":              taskType,
@@ -106,13 +122,12 @@ func (s *service) Dequeue(
 		return nil
 	}
 
+    // 任务数打点
 	numberOfTasks := 0
 	for _, gang := range response.Gangs {
 		numberOfTasks += len(gang.GetTasks())
 	}
-
-	s.metrics.TasksDequeued.Update(float64(numberOfTasks))
-
+    s.metrics.TasksDequeued.Update(float64(numberOfTasks))
 	if numberOfTasks == 0 {
 		log.WithFields(log.Fields{
 			"num_tasks": numberOfTasks,
@@ -121,6 +136,7 @@ func (s *service) Dequeue(
 	}
 
 	// Create assignments from the tasks but without any offers
+	// 创建任务布局
 	assignments := make([]models.Task, 0, numberOfTasks)
 	now := time.Now()
 	for _, gang := range response.Gangs {
@@ -153,16 +169,19 @@ func (s *service) SetPlacements(
 	successes []models.Task,
 	failures []models.Task,
 ) {
+    // 参数校验
 	if len(successes) == 0 && len(failures) == 0 {
 		log.Debug("No task to place")
 		return
 	}
 
+    // 创建上下文
 	setPlacementStart := time.Now()
 	ctx, cancelFunc := context.WithTimeout(ctx, _timeout)
 	defer cancelFunc()
 
 	// create the failed placements and populate the reason.
+	// 结构转换
 	failedPlacements := make([]*resmgrsvc.SetPlacementsRequest_FailedPlacement, len(failures))
 	for i, a := range failures {
 		failedPlacements[i] = &resmgrsvc.SetPlacementsRequest_FailedPlacement{
@@ -186,6 +205,8 @@ func (s *service) SetPlacements(
 		Placements:       s.createPlacements(successes),
 		FailedPlacements: failedPlacements,
 	}
+
+    // 通知资源管理器布局结果
 	response, err := s.resourceManager.SetPlacements(ctx, request)
 	if err != nil {
 		log.WithFields(log.Fields{
@@ -200,6 +221,7 @@ func (s *service) SetPlacements(
 		return
 	}
 
+	// 日志打印
 	if response.GetError().GetFailure() != nil {
 		s.metrics.SetPlacementFail.Inc(
 			int64(len(response.GetError().GetFailure().GetFailed())))
@@ -222,14 +244,17 @@ func (s *service) SetPlacements(
 		WithField("num_failed_placements", len(failedPlacements)).
 		Debug("Set placements succeeded")
 
+	// 上报指标
 	setPlacementDuration := time.Since(setPlacementStart)
 	s.metrics.SetPlacementDuration.Record(setPlacementDuration)
 	s.metrics.SetPlacementSuccess.Inc(int64(len(successes)))
 }
 
+// 创建任务布局
 func (s *service) createPlacements(assigned []models.Task) []*resmgr.Placement {
 	createPlacementStart := time.Now()
 	// For each offer find all tasks assigned to it.
+	// 构建映射表
 	offersByID := map[string]models.Offer{}
 	offersToTasks := map[string][]models.Task{}
 	for _, placement := range assigned {
@@ -237,6 +262,7 @@ func (s *service) createPlacements(assigned []models.Task) []*resmgr.Placement {
 		if offer == nil {
 			continue
 		}
+
 		offersByID[offer.ID()] = offer
 		if _, exists := offersToTasks[offer.ID()]; !exists {
 			offersToTasks[offer.ID()] = []models.Task{}
@@ -245,6 +271,7 @@ func (s *service) createPlacements(assigned []models.Task) []*resmgr.Placement {
 	}
 
 	// For each offer create a placement with all the tasks assigned to it.
+	// 构建布局任务
 	var resPlacements []*resmgr.Placement
 	for offerID, tasks := range offersToTasks {
 		offer := offersByID[offerID]
@@ -261,17 +288,22 @@ func (s *service) createPlacements(assigned []models.Task) []*resmgr.Placement {
 		resPlacements = append(resPlacements, placement)
 	}
 	createPlacementDuration := time.Since(createPlacementStart)
-	s.metrics.CreatePlacementDuration.Record(createPlacementDuration)
+	
+      // 上报指标
+      s.metrics.CreatePlacementDuration.Record(createPlacementDuration)
 	return resPlacements
 }
 
 func (s *service) createTasks(gang *resmgrsvc.Gang, now time.Time) []*models_v0.TaskV0 {
 	resTasks := gang.GetTasks()
 	tasks := make([]*models_v0.TaskV0, len(resTasks))
+	// 参数校验
 	if len(resTasks) == 0 {
 		return tasks
 	}
+
 	// A value for maxRounds of <= 0 means there is no limit
+	// 创建任务配置
 	maxRounds := s.config.MaxRounds.Value(resTasks[0].Type)
 	duration := s.config.MaxDurations.Value(resTasks[0].Type)
 	deadline := now.Add(duration)
@@ -295,6 +327,7 @@ func getPlacementTasks(tasks []models.Task) []*resmgr.Placement_Task {
 	return placementTasks
 }
 
+// 格式化端口
 func formatPorts(ports []uint64) []uint32 {
 	result := make([]uint32, len(ports))
 	for i, port := range ports {

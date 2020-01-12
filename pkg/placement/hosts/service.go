@@ -34,6 +34,7 @@ const (
 )
 
 var (
+    // 错误
 	errfailedToAcquireHosts = errors.New("failed to acquire hosts")
 	errnotImplemented       = errors.New("Not Implemented")
 	errNoValidHosts         = errors.New("no valid hosts for reservation")
@@ -43,13 +44,16 @@ var (
 // Service will manage hosts used to get hosts and reserve hosts.
 type Service interface {
 	// GetHosts fetches a batch of hosts from the host manager matching filter.
+	// 筛选主机
 	GetHosts(ctx context.Context, task *resmgr.Task, filter *hostsvc.HostFilter) (hosts []*models_v0.Host, err error)
 
 	// ReserveHost Makes reservation for the host in hostmanager.
+	// 预留主机资源
 	ReserveHost(ctx context.Context, host []*models_v0.Host, task *resmgr.Task) (err error)
 
 	// GetCompletedReservation gets the completed reservation
 	// from host manager
+	// 查询已经完成的预定
 	GetCompletedReservation(
 		ctx context.Context) ([]*hostsvc.CompletedReservation, error)
 }
@@ -57,10 +61,15 @@ type Service interface {
 // service is implementing Service interface
 type service struct {
 	// hostmanager yarpc client
+	// 主机管理
 	hostManager hostsvc.InternalHostServiceYARPCClient
+
 	// resource manager yarpc client
+	// 资源管理
 	resourceManager resmgrsvc.ResourceManagerServiceYARPCClient
+
 	// placement engine metrics object
+	// 指标
 	metrics *metrics.Metrics
 }
 
@@ -82,9 +91,11 @@ func (s *service) GetHosts(
 	ctx context.Context,
 	task *resmgr.Task,
 	filter *hostsvc.HostFilter) (hosts []*models_v0.Host, err error) {
+	// 创建上下文
 	ctx, cancelFunc := context.WithTimeout(ctx, _timeout)
 	defer cancelFunc()
 
+	// 筛选主机
 	req := &hostsvc.GetHostsRequest{
 		Filter: filter,
 	}
@@ -101,6 +112,7 @@ func (s *service) GetHosts(
 	// Get tasks running on hosts
 	var hostTasksMap map[string]*resmgrsvc.TaskList
 	if len(res.Hosts) > 0 {
+	    // 查询主机上运行的任务
 		hostTasksMap, err = s.getTasks(ctx, res.Hosts, task.Type)
 		if err != nil {
 			log.WithFields(log.Fields{
@@ -113,6 +125,8 @@ func (s *service) GetHosts(
 		}
 	}
 	s.metrics.HostGet.Inc(1)
+
+    // 返回主机，附加主机任务列表
 	return s.fillTasksInHost(res.GetHosts(), hostTasksMap), nil
 }
 
@@ -123,6 +137,7 @@ func (s *service) fillTasksInHost(
 	hosts []*hostsvc.HostInfo,
 	tasks map[string]*resmgrsvc.TaskList) []*models_v0.Host {
 	placementHosts := make([]*models_v0.Host, 0, len(hosts))
+	// 遍历主机
 	for _, host := range hosts {
 		var taskList []*resmgr.Task
 		if tasks != nil && tasks[host.Hostname] != nil {
@@ -139,16 +154,19 @@ func (s *service) getTasks(
 	ctx context.Context,
 	hostsInfo []*hostsvc.HostInfo,
 	taskType resmgr.TaskType) (map[string]*resmgrsvc.TaskList, error) {
+	// 创建上下文
 	ctx, cancelFunc := context.WithTimeout(ctx, _timeout)
 	defer cancelFunc()
 
 	// Extract the hostname
+	// 提取主机名字
 	hostnames := make([]string, 0, len(hostsInfo))
 	for _, hostInfo := range hostsInfo {
 		hostnames = append(hostnames, hostInfo.Hostname)
 	}
 
 	// Get tasks running on provided hosts
+	// 查询主机上的任务
 	tasksRequest := &resmgrsvc.GetTasksByHostsRequest{
 		Type:      taskType,
 		Hostnames: hostnames,
@@ -165,6 +183,7 @@ func (s *service) getTasks(
 func (s *service) ReserveHost(ctx context.Context,
 	hosts []*models_v0.Host,
 	task *resmgr.Task) error {
+	// 参数校验
 	if len(hosts) <= 0 {
 		return errNoValidHosts
 	}
@@ -172,9 +191,11 @@ func (s *service) ReserveHost(ctx context.Context,
 		return errNoValidTask
 	}
 
+	// 创建上下文
 	ctx, cancelFunc := context.WithTimeout(ctx, _timeout)
 	defer cancelFunc()
 
+	// 预留资源
 	req := &hostsvc.ReserveHostsRequest{
 		Reservation: &hostsvc.Reservation{
 			Task:  task,
@@ -193,6 +214,7 @@ func (s *service) ReserveHost(ctx context.Context,
 }
 
 // HostInfoToHostModel returns the array of models_v0.Host to hostsvc.HostInfo
+// 类型转换
 func HostInfoToHostModel(hostModels []*models_v0.Host) []*hostsvc.HostInfo {
 	hInfos := make([]*hostsvc.HostInfo, 0, len(hostModels))
 	for _, hModel := range hostModels {
@@ -204,9 +226,11 @@ func HostInfoToHostModel(hostModels []*models_v0.Host) []*hostsvc.HostInfo {
 // GetCompletedReservation gets the completed reservation from host manager
 func (s *service) GetCompletedReservation(ctx context.Context,
 ) ([]*hostsvc.CompletedReservation, error) {
+    // 创建上下文
 	ctx, cancelFunc := context.WithTimeout(ctx, _timeout)
 	defer cancelFunc()
 
+	// 到主机管理器查询
 	completedResp, err := s.hostManager.GetCompletedReservations(
 		ctx,
 		&hostsvc.GetCompletedReservationRequest{},

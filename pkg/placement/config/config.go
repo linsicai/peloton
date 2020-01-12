@@ -31,6 +31,7 @@ import (
 const (
 	// Batch is the batch strategy
 	Batch = PlacementStrategy("batch")
+
 	// Mimir is the Mimir strategy
 	Mimir = PlacementStrategy("mimir")
 )
@@ -38,6 +39,7 @@ const (
 // Config holds all configs to run a placement engine.
 type Config struct {
 	Metrics      metrics.Config        `yaml:"metrics"`
+
 	Placement    PlacementConfig       `yaml:"placement"`
 	Election     leader.ElectionConfig `yaml:"election"`
 	Mesos        mesos.Config          `yaml:"mesos"`

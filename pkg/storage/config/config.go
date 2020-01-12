@@ -25,7 +25,9 @@ type Config struct {
 	Cassandra          cassandra.Config `yaml:"cassandra"`
 	UseCassandra       bool             `yaml:"use_cassandra"`
 
-    // 选项
+    // 自动迁移
 	AutoMigrate        bool             `yaml:"auto_migrate"`
+
+    // 写并发
 	DbWriteConcurrency int              `yaml:"db_write_concurrency"`
 }

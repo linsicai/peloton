@@ -74,23 +74,33 @@ const (
 // message queue
 type Engine interface {
 	// Start starts the archiver goroutines
+	// 启动
 	Start() error
+
 	// Cleanup cleans the archiver engine before
 	// restart
+	// 下线
 	Cleanup()
 }
 
 type engine struct {
 	// Jobmgr client to make Job Query/Delete API requests
+	// 任务管理器接口
 	jobClient job.JobManagerYARPCClient
+
 	// Task Manager Client to query task events.
+	// 查询任务状态
 	taskClient task.TaskManagerYARPCClient
+
 	// Yarpc dispatcher
 	dispatcher *yarpc.Dispatcher
+
 	// Archiver config
 	config config.Config
+
 	// Archiver metrics
 	metrics *Metrics
+
 	// Archiver backoff/retry policy
 	retryPolicy backoff.RetryPolicy
 }
@@ -178,6 +188,7 @@ func (e *engine) Start() error {
 	e.metrics.ArchiverStart.Inc(1)
 	jitter := time.Duration(rand.Intn(jitterMax)) * time.Millisecond
 	time.Sleep(e.config.Archiver.BootstrapDelay + jitter)
+
 	// At first, the time range will be [(t-30d-1d), (t-30d))
 	maxTime := time.Now().UTC().Add(-e.config.Archiver.ArchiveAge)
 	minTime := maxTime.Add(-e.config.Archiver.ArchiveStepSize)
@@ -361,22 +372,29 @@ func (e *engine) deletePodEvents(
 	ctx context.Context,
 	results []*job.JobSummary) {
 	var i uint32
+	// 遍历任务
 	for _, jobSummary := range results {
+	    // 排除必须要到
 		if jobSummary.GetType() != job.JobType_SERVICE {
 			continue
 		}
+
+		// 日志
 		log.WithFields(log.Fields{
 			"job_id": jobSummary.GetId().GetValue(),
 			"state":  jobSummary.GetRuntime().GetState()}).
 			Debug("Deleting pod events")
 
+		// 遍历任务实例
 		for i = 0; i < jobSummary.GetInstanceCount(); i++ {
+		    // 创建上下文
 			ctx, cancel := context.WithTimeout(
 				ctx,
 				e.config.Archiver.PelotonClientTimeout,
 			)
 			defer cancel()
 
+			// 查询pod 事件
 			response, err := e.taskClient.GetPodEvents(
 				ctx,
 				&task.GetPodEventsRequest{
@@ -393,10 +411,12 @@ func (e *engine) deletePodEvents(
 				continue
 			}
 
+			// 还没有结果
 			if len(response.GetResult()) == 0 {
 				continue
 			}
 
+			// 解析出运行id
 			runID, err := util.ParseRunID(response.GetResult()[0].GetTaskId().GetValue())
 			if err != nil {
 				log.WithFields(log.Fields{
@@ -410,17 +430,22 @@ func (e *engine) deletePodEvents(
 			}
 
 			if runID > _defaultPodEventsToConstraint {
+			    // 日志
 				log.WithFields(log.Fields{
 					"job_id":      jobSummary.GetId(),
 					"instance_id": i,
 					"run_id":      runID - _defaultPodEventsToConstraint,
 					"task_id":     response.GetResult()[0].GetTaskId().GetValue(),
 				}).Info("Delete runs")
+
+				// 上下文
 				ctx, cancel := context.WithTimeout(
 					ctx,
 					e.config.Archiver.PelotonClientTimeout,
 				)
 				defer cancel()
+
+				// 删除pod 事件
 				_, err = e.taskClient.DeletePodEvents(
 					ctx,
 					&task.DeletePodEventsRequest{
@@ -438,11 +463,13 @@ func (e *engine) deletePodEvents(
 					continue
 				}
 			}
-			e.metrics.PodDeleteEventsSuccess.Inc(1)
+		// 删除成功
+		e.metrics.PodDeleteEventsSuccess.Inc(1)
 		}
 	}
 }
 
+// 查询job 详情
 func (e *engine) queryJobs(
 	ctx context.Context,
 	req *job.QueryRequest,

@@ -27,11 +27,14 @@ import (
 
 // lease implements the models.Offer interface. Internally it keeps the API
 // object gotten from host manager.
+// 租约
 type lease struct {
 	// hostLease is the lease object that we received from the hostmanager API.
+	// 主机租约
 	hostLease *hostmgr.HostLease
 
 	// The tasks running on this host.
+	// 任务列表
 	tasks []*resmgr.Task
 }
 
@@ -62,6 +65,7 @@ func (l lease) AgentID() string {
 
 // GetAvailableResources returns the available resources that this lease
 // gives control over.
+// 获取主机可用资源
 func (l lease) GetAvailableResources() (scalar.Resources, uint64) {
 	res := l.hostLease.GetHostSummary().GetResources()
 	return scalar.Resources{
@@ -75,11 +79,16 @@ func (l lease) GetAvailableResources() (scalar.Resources, uint64) {
 // ToMimirGroup returns the mimir placement group so that the placement
 // strategy can place tasks on that group.
 func (l lease) ToMimirGroup() *placement.Group {
+	// 获取资源
 	res, ports := l.GetAvailableResources()
+
+	// 获取标签
 	labels := map[string]string{}
 	for _, label := range l.hostLease.GetHostSummary().GetLabels() {
 		labels[label.Key] = label.Value
 	}
+
+	// 创建分组
 	group := mimir_v1.CreateGroup(l.Hostname(), res, ports, labels)
 	for _, task := range l.tasks {
 		entity := mimir_v0.TaskToEntity(task, true)
@@ -90,6 +99,7 @@ func (l lease) ToMimirGroup() *placement.Group {
 }
 
 // AvailablePortRanges returns the list of available port ranges in this lease.
+// 返回可用端口列表
 func (l lease) AvailablePortRanges() map[*models.PortRange]struct{} {
 	ranges := l.hostLease.GetHostSummary().GetAvailablePorts()
 	result := map[*models.PortRange]struct{}{}
@@ -99,6 +109,7 @@ func (l lease) AvailablePortRanges() map[*models.PortRange]struct{} {
 	return result
 }
 
+// 计算端口数
 func (l lease) countFreePorts() uint64 {
 	ranges := l.hostLease.GetHostSummary().GetAvailablePorts()
 	var total uint64

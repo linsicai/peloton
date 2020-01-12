@@ -25,9 +25,11 @@ import (
 
 // defragRanker is the struct for implementation of
 // Defrag Ranker
+// 碎片整理排序
 type defragRanker struct {
-	mu          sync.RWMutex
-	name        string
+	mu          sync.RWMutex // 锁
+	name        string // 名字
+
 	summaryList []interface{}
 }
 
@@ -57,21 +59,26 @@ func (d *defragRanker) GetRankedHostList(
 	offerIndex map[string]summary.HostSummary) []interface{} {
 	d.mu.Lock()
 	defer d.mu.Unlock()
+
 	// if d.summaryList is not initilized , call the getRankedHostList
 	if len(d.summaryList) == 0 {
 		d.summaryList = d.getRankedHostList(offerIndex)
 	}
+
 	return d.summaryList
 }
 
 // RefreshRanking refreshes the hostlist based on new host summary index
 // This function has to be called periodically to refresh the list
+// 使用异步提供的主机列表
 func (d *defragRanker) RefreshRanking(
 	ctx context.Context,
 	offerIndex map[string]summary.HostSummary) {
 	summaryList := d.getRankedHostList(offerIndex)
+
 	d.mu.Lock()
 	defer d.mu.Unlock()
+
 	d.summaryList = summaryList
 }
 
@@ -84,10 +91,14 @@ func (d *defragRanker) RefreshRanking(
 func (d *defragRanker) getRankedHostList(
 	offerIndex map[string]summary.HostSummary) []interface{} {
 	var summaryList []interface{}
+	
+
+    // 转list
 	for _, summary := range offerIndex {
 		summaryList = append(summaryList, summary)
 	}
 
+    // 设置排序因子
 	gpus := func(c1, c2 interface{}) bool {
 		return util.GetResourcesFromOffers(
 			c1.(summary.HostSummary).GetOffers(summary.All)).GPU <
@@ -113,6 +124,7 @@ func (d *defragRanker) getRankedHostList(
 				c2.(summary.HostSummary).GetOffers(summary.All)).Disk
 	}
 
+    // 排序
 	sorter.OrderedBy(gpus, cpus, memory, disk).Sort(summaryList)
 	return summaryList
 }

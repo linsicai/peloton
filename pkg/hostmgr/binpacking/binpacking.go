@@ -23,12 +23,15 @@ import (
 
 const (
 	// DeFrag is the name for the de-fragmentation policy
+	// ？？？
 	DeFrag = "DEFRAG"
 
 	// FirstFit is the name of the First Fit policy
+	// 首个合适
 	FirstFit = "FIRST_FIT"
 
 	// LoadAware is the name of the Load Aware policy
+	// 考虑负载
 	LoadAware = "LOAD_AWARE"
 )
 
@@ -39,15 +42,18 @@ var rankers = make(map[string]Ranker)
 
 // register creates all the rankers and keeps it in the
 // ranker map.
+// 注册排序器
 func register(
 	name string,
 	rankerFunc func() Ranker,
 ) {
 	log.WithField("name", name).Info("Registering ranker")
+
 	if rankerFunc == nil {
 		log.WithField("name", name).Error("invalid ranker creator function")
 		return
 	}
+
 	if _, registered := rankers[name]; registered {
 		log.WithField("name", name).Error("ranker already registered")
 		return
@@ -72,6 +78,7 @@ func Init(
 	if cqosClient == nil {
 		return
 	}
+
 	if _, registered := rankers[LoadAware]; registered {
 		log.WithField("name", LoadAware).Error("ranker already registered")
 		return
@@ -81,11 +88,13 @@ func Init(
 }
 
 // GetRankerByName returns a ranker with specified name
+// 按名查找
 func GetRankerByName(name string) Ranker {
 	return rankers[name]
 }
 
 // GetRankers returns all registered rankers
+// map to list
 func GetRankers() []Ranker {
 	result := make([]Ranker, 0, len(rankers))
 	for _, r := range rankers {
@@ -95,6 +104,7 @@ func GetRankers() []Ranker {
 }
 
 // CleanUpRanker is for testing purpose only.
+// 清空
 func CleanUpRanker() {
 	rankers = make(map[string]Ranker)
 }
