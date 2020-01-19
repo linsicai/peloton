@@ -16,6 +16,7 @@ package watchsvc
 
 const (
 	_defaultBufferSize int = 100
+
 	_defaultMaxClient  int = 1000
 )
 
