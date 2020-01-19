@@ -16,7 +16,10 @@ package common
 
 const (
 	// RunningStateNotStarted represents not started state of a resource manager component
+	// 未开始状态
 	RunningStateNotStarted = 0
+
 	// RunningStateRunning represents running state of a resource manager component
+	// 运行状态
 	RunningStateRunning = 1
 )

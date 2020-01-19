@@ -19,6 +19,7 @@ import (
 )
 
 // Definition stores schema information about an Object
+//
 type Definition struct {
 	// normalized object name
 	Name string

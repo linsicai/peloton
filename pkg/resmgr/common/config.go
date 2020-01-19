@@ -16,9 +16,9 @@ package common
 
 import "time"
 
-// 抢占相关配置
 // PreemptionConfig is the container for preemption related config
 // TODO merge resmgr config to common
+// 抢占相关配置
 type PreemptionConfig struct {
 	// Boolean value to represent if preemption is enabled to run
 	// 开关

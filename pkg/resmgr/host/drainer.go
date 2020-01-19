@@ -32,10 +32,13 @@ import (
 )
 
 const (
+	// 超时时间
 	contextTimeout                      = 10 * time.Second
 
+	// 排水配置
 	drainingHostsLimit                  = 100                    // Maximum number of hosts to be polled from Maintenance Queue
 	drainingHostsTimeout                = 1000                   // Maintenance Queue poll timeout
+
 	markHostDrainedBackoffRetryCount    = 3                      // Retry count to mark host drained
 	markHostDrainedBackoffRetryInterval = 100 * time.Millisecond // Retry interval to mark host drained
 )
@@ -43,14 +46,21 @@ const (
 // Drainer defines the host drainer which drains
 // the hosts which are to be put into maintenance
 type Drainer struct {
+	// 主机管理类
 	hostMgrClient   hostsvc.InternalHostServiceYARPCClient // Host Manager client
 
+	// 指标
 	metrics         *Metrics
 
+	// 任务管理
 	rmTracker       rmtask.Tracker      // Task Tracker
+
 	started         int32               // State of the host drainer
 	drainerPeriod   time.Duration       // Period to run host drainer
+
 	preemptionQueue preemption.Queue    // Preemption Queue
+
+	// 生命周期管理
 	lifecycle       lifecycle.LifeCycle // Lifecycle manager
 }
 
