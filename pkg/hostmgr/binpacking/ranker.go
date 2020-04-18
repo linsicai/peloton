@@ -16,6 +16,7 @@ package binpacking
 
 import (
 	"context"
+
 	"github.com/uber/peloton/pkg/hostmgr/summary"
 )
 

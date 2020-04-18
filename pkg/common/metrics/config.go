@@ -36,37 +36,55 @@ import (
 const (
 	// TallyFlushInterval is the flush interval for metrics buffered in Tally to
 	// be flushed to the backend
+	// 刷盘间隔
 	TallyFlushInterval = 1 * time.Second
 
 	// M3 related configs
 	m3HostPort = "M3_HOSTPORT"
 	m3Service  = "M3_SERVICE"
 	m3ENV      = "M3_ENV"
+
 	// TODO: reuse the global var name constant CLUSTER
 	m3Cluster = "CLUSTER"
 )
 
 // Config will be containing the metrics configuration
 type Config struct {
-	MultiReporter  bool                   `yaml:"multi_reporter"`
-	Prometheus     *prometheusConfig      `yaml:"prometheus"`
-	Statsd         *statsdConfig          `yaml:"statsd"`
-	M3             *tallym3.Configuration `yaml:"m3"`
-	RuntimeMetrics *runtimeConfig         `yaml:"runtime_metrics"`
+	// 多个上报者
+	MultiReporter bool `yaml:"multi_reporter"`
+
+	// 监控配置
+	Prometheus *prometheusConfig `yaml:"prometheus"`
+
+	// 统计配置
+	Statsd *statsdConfig `yaml:"statsd"`
+
+	// m3 配置
+	M3 *tallym3.Configuration `yaml:"m3"`
+
+	// 实时指标配置
+	RuntimeMetrics *runtimeConfig `yaml:"runtime_metrics"`
 }
 
 // runtimeConfig contains configuration for initializing runtime metrics
 type runtimeConfig struct {
-	Enabled         bool          `yaml:"enabled"`
+	// 开关
+	Enabled bool `yaml:"enabled"`
+
+	// 收集间隔
 	CollectInterval time.Duration `yaml:"interval"`
 }
 
 type prometheusConfig struct {
+	// 开关
 	Enable bool `yaml:"enable"`
 }
 
 type statsdConfig struct {
-	Enable   bool   `yaml:"enable"`
+	// 开关
+	Enable bool `yaml:"enable"`
+
+	// 终端
 	Endpoint string `yaml:"endpoint"`
 }
 
@@ -158,6 +176,7 @@ func InitMetricScope(
 
 // SafeScopeName returns a safe scope name that removes dash which is not
 // allowed in tally
+// 域名字规则化
 func SafeScopeName(name string) string {
 	return strings.Replace(name, "-", "", -1)
 }
@@ -167,6 +186,8 @@ func SafeScopeName(name string) string {
 func setupServeMux() *nethttp.ServeMux {
 	// mux is used to mux together other (non-RPC) handlers, like metrics exposition endpoints, etc
 	mux := nethttp.NewServeMux()
+
+	// 健康度响应，默认为空
 	mux.HandleFunc("/health", func(w nethttp.ResponseWriter, _ *nethttp.Request) {
 		// TODO: make this healthcheck live, and check some kind of internal health?
 		if true {
@@ -179,6 +200,7 @@ func setupServeMux() *nethttp.ServeMux {
 	})
 
 	// Profiling
+	// 性能剖析
 	mux.Handle("/debug/pprof/", nethttp.HandlerFunc(pprof.Index))
 	mux.Handle("/debug/pprof/cmdline", nethttp.HandlerFunc(pprof.Cmdline))
 	mux.Handle("/debug/pprof/profile", nethttp.HandlerFunc(pprof.Profile))
@@ -191,32 +213,34 @@ func setupServeMux() *nethttp.ServeMux {
 // loadM3Configs loads m3 configs from env vars if exist
 func loadM3Configs(cfg *tallym3.Configuration) {
 	if cfg == nil {
+		// 无配置
 		return
 	}
 
 	log.Info("Load m3 configs from env vars")
 
+	// 加载主机与端口
 	if v := os.Getenv(m3HostPort); v != "" {
-		log.WithField("hostport", v).
-			Info("Load m3 config")
+		log.WithField("hostport", v).Info("Load m3 config")
 		cfg.HostPort = v
 	}
 
+	// 加载服务名
 	if v := os.Getenv(m3Service); v != "" {
-		log.WithField("service", v).
-			Info("Load m3 config")
+		log.WithField("service", v).Info("Load m3 config")
 		cfg.Service = v
 	}
 
+	// 加载m3 服务
 	if v := os.Getenv(m3ENV); v != "" {
-		log.WithField("env", v).
-			Info("Load m3 config")
+		log.WithField("env", v).Info("Load m3 config")
 		cfg.Env = v
 	}
 
+	// 加载m3 环境
 	if v := os.Getenv(m3Cluster); v != "" {
-		log.WithField("tag.cluster", v).
-			Info("Load m3 config")
+		log.WithField("tag.cluster", v).Info("Load m3 config")
+
 		if cfg.CommonTags == nil {
 			cfg.CommonTags = make(map[string]string)
 		}

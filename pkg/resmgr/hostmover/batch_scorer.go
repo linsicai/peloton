@@ -61,7 +61,7 @@ type batchHostMetrics struct {
 	// 主机名
 	host string
 
-    // 统计信息
+	// 统计信息
 	// number of controllers running on the host
 	numControllers uint32
 	// number of tasks running on the host
@@ -127,7 +127,7 @@ func newBatchHostMetrics(hostname string) *batchHostMetrics {
 
 // Start starts Batch Scorer process
 func (s *batchScorer) Start() error {
-    // 开关判断
+	// 开关判断
 	if !s.enabled {
 		log.Infof("Batch scorer is not enabled to run")
 		return nil
@@ -147,11 +147,11 @@ func (s *batchScorer) Start() error {
 			for {
 				select {
 				case <-s.lifeCycle.StopCh():
-				    // 退出了
+					// 退出了
 					log.Info("Exiting Batch scorer")
 					return
 				case <-ticker.C:
-				    // 做主机排序
+					// 做主机排序
 					err := s.sortOnce()
 					if err != nil {
 						log.WithError(err).Warn("BatchScorer cycle failed")
@@ -166,7 +166,7 @@ func (s *batchScorer) Start() error {
 
 // Stop stops Batch Scorer process
 func (s *batchScorer) Stop() error {
-    // 校验开关
+	// 校验开关
 	if !s.lifeCycle.Stop() {
 		log.Warn("Batch Scorer is already stopped, no action will be performed")
 		return nil
@@ -194,11 +194,11 @@ func (s *batchScorer) sortOnce() error {
 	// Make call to host pool manager to get the list of batch hosts
 	var batchHosts []string
 
-    // 创建上下文
+	// 创建上下文
 	ctx, cancelFunc := context.WithTimeout(context.Background(), _timeout)
 	defer cancelFunc()
 
-    // 拉取主机资源池
+	// 拉取主机资源池
 	resp, err := s.hostClient.ListHostPools(
 		ctx,
 		&hostsvc.ListHostPoolsRequest{})
@@ -206,7 +206,7 @@ func (s *batchScorer) sortOnce() error {
 		return err
 	}
 
-    // 只处理BATCH 资源池
+	// 只处理BATCH 资源池
 	poolFound := false
 	for _, p := range resp.GetPools() {
 		if p.GetName() == defaultBatchHostPool {
@@ -218,11 +218,11 @@ func (s *batchScorer) sortOnce() error {
 		return fmt.Errorf("pool %q not found", defaultBatchHostPool)
 	}
 
-    // 查询主机任务
+	// 查询主机任务
 	hostTasks := s.rmTracker.TasksByHosts(batchHosts, resmgr.TaskType_BATCH)
 	currentTime := time.Now()
 
-    // 遍历主机，统计指标
+	// 遍历主机，统计指标
 	hostMetrics := make([]*batchHostMetrics, len(hostTasks))
 	index := 0
 	for host, tasksPerHost := range hostTasks {
@@ -268,7 +268,7 @@ func (s *batchScorer) sortOnce() error {
 	poolMaxPriorities := make(map[string]float64)
 	clusterMaxPriority := 0.0
 
-    // 遍历主机指标，计算整体统计值
+	// 遍历主机指标，计算整体统计值
 	for _, metrics := range hostMetrics {
 		for poolId, priorities := range metrics.tasksPriority {
 			for _, priority := range priorities {
@@ -321,7 +321,7 @@ func (s *batchScorer) sortOnce() error {
 		return true
 	})
 
-    // 取主机名
+	// 取主机名
 	hosts := make([]string, 0, len(hostMetrics))
 	for _, metrics := range hostMetrics {
 		if metrics.numNonpreemptible == 0 {
@@ -338,7 +338,7 @@ func (s *batchScorer) sortOnce() error {
 }
 
 func (s *batchScorer) GetHostsByScores(numHosts uint32) []string {
-    // 读锁
+	// 读锁
 	s.hostsLock.RLock()
 	defer s.hostsLock.RUnlock()
 
@@ -348,7 +348,7 @@ func (s *batchScorer) GetHostsByScores(numHosts uint32) []string {
 		return []string{}
 	}
 
-    // 复制
+	// 复制
 	hosts := make([]string, size)
 	copy(hosts, s.orderedHosts)
 

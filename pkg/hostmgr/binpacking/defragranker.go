@@ -27,8 +27,8 @@ import (
 // Defrag Ranker
 // 碎片整理排序
 type defragRanker struct {
-	mu          sync.RWMutex // 锁
-	name        string // 名字
+	mu   sync.RWMutex // 锁
+	name string       // 名字
 
 	summaryList []interface{}
 }
@@ -91,14 +91,13 @@ func (d *defragRanker) RefreshRanking(
 func (d *defragRanker) getRankedHostList(
 	offerIndex map[string]summary.HostSummary) []interface{} {
 	var summaryList []interface{}
-	
 
-    // 转list
+	// 转list
 	for _, summary := range offerIndex {
 		summaryList = append(summaryList, summary)
 	}
 
-    // 设置排序因子
+	// 设置排序因子
 	gpus := func(c1, c2 interface{}) bool {
 		return util.GetResourcesFromOffers(
 			c1.(summary.HostSummary).GetOffers(summary.All)).GPU <
@@ -124,7 +123,7 @@ func (d *defragRanker) getRankedHostList(
 				c2.(summary.HostSummary).GetOffers(summary.All)).Disk
 	}
 
-    // 排序
+	// 排序
 	sorter.OrderedBy(gpus, cpus, memory, disk).Sort(summaryList)
 	return summaryList
 }

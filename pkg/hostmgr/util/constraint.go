@@ -32,24 +32,28 @@ func MatchSchedulingConstraint(
 ) hostsvc.HostFilterResult {
 	// If constraints don't specify an exclusive host, then reject
 	// hosts that are designated as exclusive.
-	if constraints.IsNonExclusiveConstraint(constraint) &&
-		HasExclusiveAttribute(attributes) {
+	if constraints.IsNonExclusiveConstraint(constraint) && HasExclusiveAttribute(attributes) {
+		// 有独占属性，且为独占性约束
 		log.WithField("hostname", hostname).Debug("Skipped exclusive host")
+
+		// 返回不匹配
 		return hostsvc.HostFilterResult_MISMATCH_CONSTRAINTS
 	}
 
+	// 约束为空，判为匹配
 	if constraint == nil {
 		// No scheduling constraint, we have a match.
 		return hostsvc.HostFilterResult_MATCH
 	}
 
+	// 计算主机标签+附加标签
 	lv := constraints.GetHostLabelValues(
 		hostname,
 		attributes,
 	)
-
 	lv.Merge(additionalLV)
 
+	// 评估器计算
 	result, err := evaluator.Evaluate(constraint, lv)
 	if err != nil {
 		log.WithError(err).
@@ -72,8 +76,10 @@ func MatchSchedulingConstraint(
 			"hostname":   hostname,
 			"constraint": constraint,
 		}).Debug("Attributes do not match constraint")
+		// 不匹配
 		return hostsvc.HostFilterResult_MISMATCH_CONSTRAINTS
 	}
 
+	// 匹配
 	return hostsvc.HostFilterResult_MATCH
 }

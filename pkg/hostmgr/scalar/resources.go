@@ -28,11 +28,12 @@ import (
 )
 
 // Resources is a non-thread safe helper struct holding recognized resources.
+// 资源
 type Resources struct {
-	CPU  float64
-	Mem  float64
-	Disk float64
-	GPU  float64
+	CPU  float64 // cpu
+	Mem  float64 // 内存
+	Disk float64 // 磁盘
+	GPU  float64 // gpu
 }
 
 // a safe less than or equal to comparator which takes epsilon into consideration.
@@ -40,8 +41,11 @@ type Resources struct {
 func lessThanOrEqual(f1, f2 float64) bool {
 	v := f1 - f2
 	if math.Abs(v) < util.ResourceEpsilon {
+		// 在精度范围内判为相等
 		return true
 	}
+
+	// 小于判断
 	return v < 0
 }
 
@@ -49,8 +53,11 @@ func lessThanOrEqual(f1, f2 float64) bool {
 func lessThan(f1, f2 float64) bool {
 	v := f1 - f2
 	if math.Abs(v) < util.ResourceEpsilon {
+		// 在精度范围内判为相等，即不小于
 		return false
 	}
+
+	// 小于判断
 	return v < 0
 }
 
@@ -75,12 +82,14 @@ func (r Resources) GetGPU() float64 {
 }
 
 // HasGPU is a special condition to ensure exclusive protection for GPU.
+// gpu 使用量大于最小刻度，认为使用gpu
 func (r Resources) HasGPU() bool {
 	return math.Abs(r.GPU) > util.ResourceEpsilon
 }
 
 // Contains determines whether current Resources is large enough to contain
 // the other one.
+// 判断是否包含other
 func (r Resources) Contains(other Resources) bool {
 	return lessThanOrEqual(other.CPU, r.CPU) &&
 		lessThanOrEqual(other.Mem, r.Mem) &&
@@ -121,6 +130,7 @@ func (r Resources) Compare(other Resources, cmpLess bool) bool {
 }
 
 // Add atomically add another scalar resources onto current one.
+// 增加资源
 func (r Resources) Add(other Resources) Resources {
 	return Resources{
 		CPU:  r.CPU + other.CPU,
@@ -132,14 +142,19 @@ func (r Resources) Add(other Resources) Resources {
 
 // TrySubtract attempts to subtract another scalar resources from current one
 // , but returns false if other has more resources.
+// 尝试减去资源
 func (r Resources) TrySubtract(other Resources) (Resources, bool) {
 	if !r.Contains(other) {
+		// 资源不够，返回false
 		return Resources{}, false
 	}
+
+	// 做减法，返回true
 	return r.Subtract(other), true
 }
 
 // Subtract another scalar resources from current one and return a new copy of result.
+// 减去资源
 func (r Resources) Subtract(other Resources) Resources {
 	return Resources{
 		CPU:  r.CPU - other.CPU,
@@ -150,8 +165,10 @@ func (r Resources) Subtract(other Resources) Resources {
 }
 
 // NonEmptyFields returns corresponding Mesos resource names for fields which are not empty.
+// 返回非空资源
 func (r Resources) NonEmptyFields() []string {
 	var nonEmptyFields []string
+
 	if math.Abs(r.CPU) > util.ResourceEpsilon {
 		nonEmptyFields = append(nonEmptyFields, "cpus")
 	}
@@ -169,27 +186,32 @@ func (r Resources) NonEmptyFields() []string {
 }
 
 // Empty returns whether all fields are empty now.
+// 判断是否为空资源
 func (r Resources) Empty() bool {
 	return len(r.NonEmptyFields()) == 0
 }
 
 // String returns a formatted string for scalar resources
+// 转字符串
 func (r Resources) String() string {
 	return fmt.Sprintf("CPU:%.2f MEM:%.2f DISK:%.2f GPU:%.2f",
 		r.GetCPU(), r.GetMem(), r.GetDisk(), r.GetGPU())
 }
 
 // HasResourceType validates requested resource type is present agent resource type.
+// 判断是否有指定资源
 func HasResourceType(agentRes, reqRes Resources, resourceType string) bool {
 	switch resourceType {
 	case "GPU":
 		return !reqRes.HasGPU() && agentRes.HasGPU()
 	}
+
 	return false
 }
 
 // FilterRevocableMesosResources separates revocable resources
 // and non-revocable resources
+// 过滤掉出可撤销资源和不可撤销资源
 func FilterRevocableMesosResources(rs []*mesos.Resource) (
 	revocable []*mesos.Resource, nonRevocable []*mesos.Resource) {
 	return FilterMesosResources(
@@ -203,17 +225,23 @@ func FilterRevocableMesosResources(rs []*mesos.Resource) (
 // unmatched ones.
 func FilterMesosResources(rs []*mesos.Resource, filter func(*mesos.Resource) bool) (
 	matched []*mesos.Resource, unmatched []*mesos.Resource) {
+
+	// 遍历资源
 	for _, r := range rs {
 		if filter(r) {
+			// 命中
 			matched = append(matched, r)
 		} else {
+			// 不命中
 			unmatched = append(unmatched, r)
 		}
 	}
+
 	return matched, unmatched
 }
 
 // FromResourceConfig creates a new instance of `Resources` from a `ResourceConfig`.
+// 从任务资源配置中获取资源需求
 func FromResourceConfig(rc *task.ResourceConfig) (r Resources) {
 	r.CPU = rc.GetCpuLimit()
 	r.Mem = rc.GetMemLimitMb()
@@ -223,6 +251,7 @@ func FromResourceConfig(rc *task.ResourceConfig) (r Resources) {
 }
 
 // FromResourceSpec creates a new instance of `Resources` from a `ResourceSpec`
+// 从资源规格中获取资源需求
 func FromResourceSpec(rc *pbpod.ResourceSpec) (r Resources) {
 	r.CPU = rc.GetCpuLimit()
 	r.Mem = rc.GetMemLimitMb()
@@ -231,25 +260,33 @@ func FromResourceSpec(rc *pbpod.ResourceSpec) (r Resources) {
 }
 
 // FromPodSpec creates a new instance of `Resources` from a `PodSpec`
+// 从pod 资源规格中获取资源需求
 func FromPodSpec(podspec *pbpod.PodSpec) (r Resources) {
 	var res Resources
+
+	// 遍历所有pod 资源规格，计算总资源
 	for _, c := range podspec.GetContainers() {
 		res = FromResourceSpec(
 			c.GetResource(),
 		)
 		r = r.Add(res)
 	}
+
+	// 遍历所有pod 初始化资源规则，计算总资源
 	for _, c := range podspec.GetInitContainers() {
 		res = FromResourceSpec(
 			c.GetResource(),
 		)
 		r = r.Add(res)
 	}
+
+	// 返回总资源
 	return r
 }
 
 // FromResourceSpec creates a new instance of `Resources` from
 // `peloton.Resources`
+// 结构转换
 func FromPelotonResources(rp *peloton.Resources) (r Resources) {
 	r.CPU = rp.GetCpu()
 	r.Mem = rp.GetMemMb()
@@ -260,6 +297,7 @@ func FromPelotonResources(rp *peloton.Resources) (r Resources) {
 
 // ToPelotonResources creates a new instance of `peloton.Resources` from
 // `Resources`
+// 结构转换
 func ToPelotonResources(rs Resources) *peloton.Resources {
 	return &peloton.Resources{
 		Cpu:    rs.CPU,
@@ -270,6 +308,7 @@ func ToPelotonResources(rs Resources) *peloton.Resources {
 }
 
 // FromMesosResource returns the scalar Resources from a single Mesos resource object.
+// 结构转换
 func FromMesosResource(resource *mesos.Resource) (r Resources) {
 	value := resource.GetScalar().GetValue()
 	switch name := resource.GetName(); name {
@@ -286,6 +325,7 @@ func FromMesosResource(resource *mesos.Resource) (r Resources) {
 }
 
 // FromMesosResources returns the scalar Resources from a list of Mesos resource objects.
+// 计算mesos 总资源
 func FromMesosResources(resources []*mesos.Resource) (r Resources) {
 	for _, resource := range resources {
 		tmp := FromMesosResource(resource)
@@ -298,22 +338,29 @@ func FromMesosResources(resources []*mesos.Resource) (r Resources) {
 // FromOfferToMesosResources returns list of resources from a single offer
 func FromOfferToMesosResources(offer *mesos.Offer) []*mesos.Resource {
 	var resources []*mesos.Resource
+
 	if offer == nil {
+		// 空资源
 		resources = append(resources, &mesos.Resource{})
 	} else {
+		// 计算所有offer 资源
 		for _, r := range offer.GetResources() {
 			resources = append(resources, r)
 		}
 	}
+
 	return resources
 }
 
 // FromOffersMapToMesosResources returns list of resources from a offerMap
+// 拼资源列表
 func FromOffersMapToMesosResources(offerMap map[string]*mesos.Offer) []*mesos.Resource {
 	var resources []*mesos.Resource
+
 	for _, offer := range offerMap {
 		resources = append(resources, FromOfferToMesosResources(offer)...)
 	}
+
 	return resources
 }
 
@@ -326,6 +373,7 @@ func FromOffer(offer *mesos.Offer) Resources {
 }
 
 // FromOffers returns the scalar Resources from given offers
+// 计算总资源
 func FromOffers(offers []*mesos.Offer) (r Resources) {
 	for _, offer := range offers {
 		tmp := FromOffer(offer)
@@ -346,6 +394,7 @@ func FromOfferMap(offerMap map[string]*mesos.Offer) (r Resources) {
 }
 
 // Minimum returns minimum amount of resources in each type.
+// 两个资源的最小值
 func Minimum(r1, r2 Resources) (m Resources) {
 	m.CPU = math.Min(r1.CPU, r2.CPU)
 	m.Mem = math.Min(r1.Mem, r2.Mem)
@@ -355,16 +404,17 @@ func Minimum(r1, r2 Resources) (m Resources) {
 }
 
 // AtomicResources is a wrapper around `Resources` provide thread safety.
+// 原子资源
 type AtomicResources struct {
-	sync.RWMutex
-
-	resources Resources
+	sync.RWMutex           // 锁
+	resources    Resources // 资源
 }
 
 // Get returns a copy of current value.
 func (a *AtomicResources) Get() Resources {
 	a.RLock()
 	defer a.RUnlock()
+
 	return a.resources
 }
 
@@ -372,5 +422,6 @@ func (a *AtomicResources) Get() Resources {
 func (a *AtomicResources) Set(r Resources) {
 	a.Lock()
 	defer a.Unlock()
+
 	a.resources = r
 }

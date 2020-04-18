@@ -23,12 +23,13 @@ import (
 
 	"github.com/docker/libkv/store"
 	"github.com/docker/libkv/store/zookeeper"
+
 	log "github.com/sirupsen/logrus"
 )
 
 // Discovery is the service discovery interface for Peloton clients
+// 服务发现者接口
 type Discovery interface {
-
 	// Returns the app URL for a given Peloton role such as
 	// peloton-jobmgr, peloton-resmgr or peloton-hostmgr etc.
 	GetAppURL(role string) (*url.URL, error)
@@ -52,10 +53,11 @@ func NewStaticServiceDiscovery(
 }
 
 // staticDiscovery is the static implementation of Discovery
+// 静态发现者，直接配置网址
 type staticDiscovery struct {
-	jobmgrURL  *url.URL
-	resmgrURL  *url.URL
-	hostmgrURL *url.URL
+	jobmgrURL  *url.URL // 任务管
+	resmgrURL  *url.URL // 资源管理
+	hostmgrURL *url.URL // 主机管理
 }
 
 // GetAppURL returns the app URL for a given Peloton role
@@ -73,10 +75,11 @@ func (s *staticDiscovery) GetAppURL(role string) (*url.URL, error) {
 }
 
 // NewZkServiceDiscovery creates a zkDiscovery object
+// zk 发现者
 func NewZkServiceDiscovery(
 	zkServers []string,
 	zkRoot string) (Discovery, error) {
-
+	// 创建zk 客户端
 	zkClient, err := zookeeper.New(
 		zkServers,
 		&store.Config{ConnectionTimeout: zkConnErrRetry},
@@ -89,28 +92,35 @@ func NewZkServiceDiscovery(
 		zkClient: zkClient,
 		zkRoot:   zkRoot,
 	}
+
 	return discovery, nil
 }
 
 // zkDiscovery is the zk based implementation of Discovery
 type zkDiscovery struct {
-	zkClient store.Store
-	zkRoot   string
+	zkClient store.Store // zk 客户端
+	zkRoot   string      // zk 主路径
 }
 
 // GetAppURL reads app URL from Zookeeper for a given Peloton role
 func (s *zkDiscovery) GetAppURL(role string) (*url.URL, error) {
+	// 获取zk 角色路径
 	zkPath := leaderZkPath(s.zkRoot, role)
+
+	// 获取领导者
 	leader, err := s.zkClient.Get(zkPath)
 	if err != nil {
 		return nil, err
 	}
 
+	// 解析领导者id
 	id := ID{}
 	if err := json.Unmarshal([]byte(leader.Value), &id); err != nil {
 		log.WithField("leader", leader.Value).Error("Failed to parse leader json")
 		return nil, err
 	}
+
+	// 返回url
 	return &url.URL{
 		Host: fmt.Sprintf("%s:%d", id.IP, id.GRPCPort),
 	}, nil

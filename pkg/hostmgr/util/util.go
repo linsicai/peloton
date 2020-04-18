@@ -80,11 +80,13 @@ func GetResourcesFromOffers(offers map[string]*mesos.Offer) scalar.Resources {
 
 // HasExclusiveAttribute returns true if the provided attributes contains
 // the "peloton/exclusive" attribute.
+// 是否有独占性约束
 func HasExclusiveAttribute(attributes []*mesos.Attribute) bool {
 	for _, attr := range attributes {
 		if common.PelotonExclusiveAttributeName == attr.GetName() {
 			return true
 		}
 	}
+
 	return false
 }

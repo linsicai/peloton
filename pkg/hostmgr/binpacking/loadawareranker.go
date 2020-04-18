@@ -36,17 +36,17 @@ const (
 // loadAwareRanker is the struct for implementation of
 // LoadAware Ranker
 type loadAwareRanker struct {
-	mu             sync.RWMutex // 锁
-	name           string // 名字
+	mu   sync.RWMutex // 锁
+	name string       // 名字
 
-	summaryList    []interface{} // 
+	summaryList []interface{} //
 
-    // qos 客户端
+	// qos 客户端
 	cqosClient     cqos.QoSAdvisorServiceYARPCClient
 	cqosLastUpTime time.Time
 
-    // qos 指标
-	cqosMetrics    *metrics.Metrics
+	// qos 指标
+	cqosMetrics *metrics.Metrics
 }
 
 type hostLoad struct {
@@ -107,7 +107,7 @@ func (l *loadAwareRanker) getRankedHostList(
 	ctx context.Context,
 	offerIndex map[string]summary.HostSummary,
 ) []interface{} {
-    // 复制
+	// 复制
 	var summaryList []interface{}
 	offerIndexCopy := make(map[string]summary.HostSummary, len(offerIndex))
 	for key, value := range offerIndex {

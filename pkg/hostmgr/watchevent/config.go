@@ -15,16 +15,18 @@
 package watchevent
 
 const (
-	_defaultBufferSize int = 100
-	_defaultMaxClient  int = 1000
+	_defaultBufferSize int = 100  // 默认客户端缓存大小
+	_defaultMaxClient  int = 1000 // 默认最大客户端数目
 )
 
 // Config for Watch API
 type Config struct {
 	// Size of per-client internal buffer
+	// 客户端缓存大小
 	BufferSize int `yaml:"buffer_size"`
 
 	// Maximum number of concurrent watch clients
+	// 最大客户端数目
 	MaxClient int `yaml:"max_client"`
 }
 

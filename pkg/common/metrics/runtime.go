@@ -44,6 +44,7 @@ func StartCollectingRuntimeMetrics(
 	return runtimeCollector.close
 }
 
+// 实时指标
 type runtimeMetrics struct {
 	numGoRoutines   tally.Gauge
 	goMaxProcs      tally.Gauge
@@ -58,13 +59,20 @@ type runtimeMetrics struct {
 }
 
 // RuntimeCollector is a struct containing the state of the runtimeMetrics.
+// 实时指标收集器
 type RuntimeCollector struct {
-	scope           tally.Scope
-	collectInterval time.Duration
-	metrics         runtimeMetrics
-	startedMutex    sync.RWMutex
-	started         bool // protected by startedMutex
-	quit            chan struct{}
+	scope           tally.Scope   // 域
+	collectInterval time.Duration // 收集间隔
+
+	// 指标
+	metrics runtimeMetrics
+
+	// 是否启动
+	startedMutex sync.RWMutex
+	started      bool // protected by startedMutex
+
+	// 退出通道
+	quit chan struct{}
 }
 
 // NewRuntimeCollector creates a new RuntimeCollector.
@@ -101,24 +109,34 @@ func (r *RuntimeCollector) IsRunning() bool {
 // Start starts the collector thread that periodically emits metrics.
 func (r *RuntimeCollector) Start() {
 	log.Info("rtm: starting")
+
+	// 校验是否已启动
 	r.startedMutex.RLock()
 	if r.started {
 		r.startedMutex.RUnlock()
 		return
 	}
 	r.startedMutex.RUnlock()
+
 	go func() {
+		// 创建定时器
 		ticker := time.NewTicker(r.collectInterval)
+
 		for {
 			select {
 			case <-ticker.C:
+				// 生成
 				r.generate()
+
 			case <-r.quit:
+				// 停止定时器，退出
 				ticker.Stop()
 				return
 			}
 		}
 	}()
+
+	// 设置已启动
 	r.startedMutex.Lock()
 	r.started = true
 	r.startedMutex.Unlock()
@@ -127,8 +145,11 @@ func (r *RuntimeCollector) Start() {
 // generate sends runtime metrics to the local metrics collector.
 func (r *RuntimeCollector) generate() {
 	var memStats runtime.MemStats
+
+	// 读取内存指标
 	runtime.ReadMemStats(&memStats)
 
+	// 更新测量
 	r.metrics.numGoRoutines.Update(float64(runtime.NumGoroutine()))
 	r.metrics.goMaxProcs.Update(float64(runtime.GOMAXPROCS(0)))
 	r.metrics.memoryAllocated.Update(float64(memStats.Alloc))
@@ -141,19 +162,26 @@ func (r *RuntimeCollector) generate() {
 
 	// memStats.NumGC is a perpetually incrementing counter (unless it wraps at
 	// 2^32).
+	// 计算得本次和上次gc 数目
 	num := memStats.NumGC
 	lastNum := atomic.SwapUint32(&r.metrics.lastNumGC, num) // reset for the next iteration
 
 	// (num - lastNum) tells us the number of gc cycles performed since the late
 	// generate was called.
 	if delta := num - lastNum; delta > 0 {
+		// 间隔周期内有gc
+
+		// 增加gc 数
 		r.metrics.numGC.Inc(int64(delta))
+
 		// _numGCThreshold holds the max value beyond which we can't get the gc
 		// pause stats from runtime.MemStats.
 		if delta >= _numGCThreshold {
 			lastNum = num - _numGCThreshold
 		}
+
 		// for each gc cycle record the pause duration.
+		// gc 时间
 		for i := lastNum; i != num; i++ {
 			pause := memStats.PauseNs[i%256]
 			r.metrics.gcPauseMs.Record(time.Duration(pause))
@@ -163,6 +191,7 @@ func (r *RuntimeCollector) generate() {
 
 // close stops collecting runtime metrics. It cannot be started again after it's
 // been stopped.
+// 退出函数，打开quit 通道
 func (r *RuntimeCollector) close() {
 	close(r.quit)
 }

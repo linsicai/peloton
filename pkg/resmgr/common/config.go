@@ -32,6 +32,6 @@ type PreemptionConfig struct {
 	// be great than entitlement(for a resource pool) without preemption kicking in.
 	// If the value exceeds this number then the preemption logic will kick
 	// in to reduce the allocation.
-	// 抢占阈值？
+	// 抢占阈值
 	SustainedOverAllocationCount int `yaml:"sustained_over_allocation_count"`
 }

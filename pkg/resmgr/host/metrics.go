@@ -19,8 +19,8 @@ import "github.com/uber-go/tally"
 // Metrics is a placeholder for all metrics in host.
 // 排水指标
 type Metrics struct {
-	HostDrainSuccess tally.Counter  // 排水成功数
-	HostDrainFail    tally.Counter  // 排水失败数
+	HostDrainSuccess tally.Counter // 排水成功数
+	HostDrainFail    tally.Counter // 排水失败数
 }
 
 // NewMetrics returns a new instance of host.Metrics.

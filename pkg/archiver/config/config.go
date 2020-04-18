@@ -38,7 +38,6 @@ const (
 	_defaultMaxArchiveEntries = 5000
 
 	// start archiving jobs that have completed 30 days ago
-	// 
 	_defaultArchiveAge = 720 * time.Hour
 
 	// peloton client timeout for Job Query/Delete API
