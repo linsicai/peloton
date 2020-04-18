@@ -25,6 +25,7 @@ import (
 )
 
 // serviceHandler implements peloton.api.volume.VolumeService
+// 一个空的卷接口
 type serviceHandler struct {
 }
 
@@ -44,6 +45,7 @@ func (h *serviceHandler) DeleteVolume(
 	ctx context.Context,
 	req *volume_svc.DeleteVolumeRequest,
 ) (*volume_svc.DeleteVolumeResponse, error) {
+    // 未实现
 	return nil, yarpcerrors.UnimplementedErrorf("Unimplemented")
 }
 
@@ -52,6 +54,7 @@ func (h *serviceHandler) ListVolumes(
 	ctx context.Context,
 	req *volume_svc.ListVolumesRequest,
 ) (*volume_svc.ListVolumesResponse, error) {
+    // 未实现
 	return nil, yarpcerrors.UnimplementedErrorf("Unimplemented")
 }
 
@@ -60,6 +63,7 @@ func (h *serviceHandler) GetVolume(
 	ctx context.Context,
 	req *volume_svc.GetVolumeRequest,
 ) (*volume_svc.GetVolumeResponse, error) {
+    // 未实现
 	return nil, yarpcerrors.UnimplementedErrorf("Unimplemented")
 }
 

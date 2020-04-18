@@ -21,8 +21,10 @@ type metrics struct {
 	// Tracks if multiple entitle calculation goroutines were attempted to be
 	// started.
 	calculationDuplicate tally.Counter
+
 	// Tracks the failure count of the calculation cycle.
 	calculationFailed tally.Counter
+
 	// Tracks the duration of the calculation cycle.
 	calculationDuration tally.Timer
 }
